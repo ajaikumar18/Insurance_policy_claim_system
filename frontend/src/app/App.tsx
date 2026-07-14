@@ -1,4 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { AuthService } from "./services/AuthService";
+import { PolicyService } from "./services/PolicyService";
+import { UnderwritingService } from "./services/UnderwritingService";
+import { ClaimService } from "./services/ClaimService";
+import { AdminService } from "./services/AdminService";
 import {
   LayoutDashboard, FileText, Shield, Settings,
   Bell, Search, AlertTriangle,
@@ -59,6 +64,7 @@ const claimsByType = [
 interface Policy {
   id: string; holder: string; type: string;
   premium: number; status: string; expiry: string; risk: string;
+  dbId?: number;
 }
 const POLICIES: Policy[] = [
   { id: "POL-2024-001", holder: "John Meridian & Co.",      type: "Commercial Property",  premium: 12450,  status: "Active",       expiry: "2025-03-15", risk: "Medium"   },
@@ -178,10 +184,12 @@ function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   );
 }
 
-function LoginView({ selectedRole, onSelectRole, onLogin }: {
+function LoginView({ selectedRole, onSelectRole, onLogin, error, loading }: {
   selectedRole: Role;
   onSelectRole: (role: Role) => void;
-  onLogin: (role: Role) => void;
+  onLogin: (role: Role, email?: string, password?: string) => void;
+  error: string | null;
+  loading: boolean;
 }) {
   const selectedLabel = ROLES.find(r => r.value === selectedRole)?.label ?? "System Administrator";
 
@@ -228,11 +236,19 @@ function LoginView({ selectedRole, onSelectRole, onLogin }: {
               <div className="mt-2 text-sm font-medium text-slate-800">{selectedLabel}</div>
             </div>
 
+            {error && (
+              <div className="mt-4 rounded-lg bg-red-50 p-3 border border-red-200 text-xs text-red-700 font-mono">
+                {error}
+              </div>
+            )}
+
             <form
               className="mt-6 space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                onLogin(selectedRole);
+                const emailInput = document.getElementById("email") as HTMLInputElement;
+                const passwordInput = document.getElementById("password") as HTMLInputElement;
+                onLogin(selectedRole, emailInput?.value, passwordInput?.value);
               }}
             >
               <div>
@@ -259,9 +275,10 @@ function LoginView({ selectedRole, onSelectRole, onLogin }: {
 
               <button
                 type="submit"
-                className="w-full rounded-lg bg-[#E8411A] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#c83517]"
+                disabled={loading}
+                className="w-full rounded-lg bg-[#E8411A] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#c83517] disabled:opacity-50"
               >
-                Access Dashboard
+                {loading ? "Authenticating..." : "Access Dashboard"}
               </button>
             </form>
 
@@ -401,21 +418,104 @@ function DashboardView() {
 }
 
 // ─── Policy Register ──────────────────────────────────────────
-function PoliciesView() {
+function PoliciesView({ policies = POLICIES, onRefresh = () => {}, role }: {
+  policies?: Policy[];
+  onRefresh?: () => void;
+  role: Role;
+}) {
   const [search, setSearch]       = useState("");
   const [statusFilter, setFilter] = useState("All");
 
-  const filtered = POLICIES.filter(p => {
+  // Endorsement State
+  const [activeEndorsePolicy, setActiveEndorsePolicy] = useState<Policy | null>(null);
+  const [endorseForm, setEndorseForm] = useState({ productType: "", basePremium: "", expiryDate: "" });
+  const [submittingEndorsement, setSubmittingEndorsement] = useState(false);
+
+  // History Log State
+  const [activeHistoryPolicy, setActiveHistoryPolicy] = useState<Policy | null>(null);
+  const [historyLogs, setHistoryLogs] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  const filtered = policies.filter(p => {
     const q = search.toLowerCase();
     const matchSearch = p.holder.toLowerCase().includes(q) || p.id.toLowerCase().includes(q);
     const matchStatus = statusFilter === "All" || p.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
+  const handleOpenEndorse = (p: Policy) => {
+    setActiveEndorsePolicy(p);
+    setEndorseForm({
+      productType: p.type,
+      basePremium: p.premium.toString(),
+      expiryDate: p.expiry
+    });
+  };
+
+  const handleOpenHistory = async (p: Policy) => {
+    setActiveHistoryPolicy(p);
+    setLoadingHistory(true);
+    try {
+      if (p.dbId) {
+        const data = await PolicyService.getPolicyHistory(p.dbId);
+        setHistoryLogs(data);
+      } else {
+        setHistoryLogs([]);
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to load policy history");
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleEndorseSubmit = async () => {
+    if (!activeEndorsePolicy || !activeEndorsePolicy.dbId) return;
+    const premiumVal = parseFloat(endorseForm.basePremium);
+    if (isNaN(premiumVal) || premiumVal < 0) {
+      alert("Please enter a valid base premium total");
+      return;
+    }
+    setSubmittingEndorsement(true);
+    try {
+      const res = await PolicyService.endorsePolicy(activeEndorsePolicy.dbId, {
+        productType: endorseForm.productType,
+        basePremium: premiumVal,
+        expiryDate: endorseForm.expiryDate
+      });
+      alert(`${res.message}\nPro-rata adjustment: $${res.proRataAdjustment} (based on ${res.daysRemaining} days remaining).`);
+      setActiveEndorsePolicy(null);
+      onRefresh();
+    } catch (err: any) {
+      alert(err.message || "Failed to submit endorsement");
+    } finally {
+      setSubmittingEndorsement(false);
+    }
+  };
+
+  // Local Pro-Rata Projection Helper
+  const getProRataProjection = () => {
+    if (!activeEndorsePolicy) return null;
+    const oldP = activeEndorsePolicy.premium;
+    const newP = parseFloat(endorseForm.basePremium) || 0;
+    const expiry = new Date(endorseForm.expiryDate);
+    const now = new Date();
+    const daysRemaining = Math.max(0, Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    const diff = newP - oldP;
+    const adj = diff * (daysRemaining / 365.0);
+    return {
+      daysRemaining,
+      adjustment: adj.toFixed(2),
+      diff: diff.toFixed(2)
+    };
+  };
+
+  const projection = getProRataProjection();
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <SectionHeader title="Policy Register" sub={`${POLICIES.length} policies · ${POLICIES.filter(p => p.status === "Active").length} active`} />
+        <SectionHeader title="Policy Register" sub={`${policies.length} policies · ${policies.filter(p => p.status === "Active").length} active`} />
         <button className="flex items-center gap-1.5 bg-primary text-primary-foreground text-xs px-3 py-2 rounded-sm hover:bg-primary/90 transition-colors font-medium">
           <Plus size={12} /> New Policy
         </button>
@@ -451,7 +551,7 @@ function PoliciesView() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                {["Policy ID","Policyholder","Product Type","Base Premium","Risk Level","Expiry Date","Status",""].map(h => <Th key={h}>{h}</Th>)}
+                {["Policy ID","Policyholder","Product Type","Base Premium","Risk Level","Expiry Date","Status","Actions"].map(h => <Th key={h}>{h}</Th>)}
               </tr>
             </thead>
             <tbody>
@@ -466,8 +566,22 @@ function PoliciesView() {
                   <td className="px-4 py-3"><Badge status={p.status} /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <button className="text-muted-foreground hover:text-primary transition-colors"><Eye size={13} /></button>
-                      <button className="text-muted-foreground hover:text-primary transition-colors"><MoreHorizontal size={13} /></button>
+                      <button 
+                        onClick={() => handleOpenHistory(p)}
+                        className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 text-[10px] font-mono border border-border px-1.5 py-0.5 rounded-sm bg-muted/20"
+                        title="View Historical Baselines"
+                      >
+                        <Eye size={11} /> History
+                      </button>
+                      {(role === "admin" || role === "underwriter") && p.status === "Active" && (
+                        <button 
+                          onClick={() => handleOpenEndorse(p)}
+                          className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 text-[10px] font-mono border border-border px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary"
+                          title="Submit Mid-Term Endorsement"
+                        >
+                          Endorse
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -479,21 +593,183 @@ function PoliciesView() {
           <div className="py-10 text-center text-xs text-muted-foreground font-mono">No policies match the current filter.</div>
         )}
       </div>
+
+      {/* ─── Endorsement Modal ─── */}
+      {activeEndorsePolicy && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-[#0b1b3d] border border-border rounded-sm max-w-md w-full p-6 space-y-4 shadow-xl">
+            <div>
+              <h3 className="font-['Barlow_Condensed'] text-lg font-semibold uppercase tracking-wide text-white">Mid-Term Policy Endorsement</h3>
+              <p className="text-[11px] font-mono text-muted-foreground mt-0.5">Modifying Policy: {activeEndorsePolicy.id}</p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] font-mono text-muted-foreground uppercase mb-1">Product Type</label>
+                <select
+                  className="w-full bg-[#132854] border border-border text-white rounded-sm px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  value={endorseForm.productType}
+                  onChange={e => setEndorseForm(f => ({ ...f, productType: e.target.value }))}
+                >
+                  {["Commercial Property", "Marine Cargo", "Life Insurance", "General Liability", "Auto Fleet", "Health Insurance", "Cyber Liability", "Directors & Officers"].map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-mono text-muted-foreground uppercase mb-1">Base Premium Total ($)</label>
+                <input
+                  type="number"
+                  className="w-full bg-[#132854] border border-border text-white font-mono rounded-sm px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  value={endorseForm.basePremium}
+                  onChange={e => setEndorseForm(f => ({ ...f, basePremium: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-mono text-muted-foreground uppercase mb-1">Expiry Date</label>
+                <input
+                  type="date"
+                  className="w-full bg-[#132854] border border-border text-white font-mono rounded-sm px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  value={endorseForm.expiryDate}
+                  onChange={e => setEndorseForm(f => ({ ...f, expiryDate: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {projection && (
+              <div className="bg-[#132854] p-3.5 border border-border rounded-sm space-y-1.5 font-mono text-[11px]">
+                <div className="text-[10px] uppercase text-muted-foreground tracking-wider mb-1">Pro-Rata Projection</div>
+                <div className="flex justify-between text-white">
+                  <span>Days Remaining:</span>
+                  <span>{projection.daysRemaining} days</span>
+                </div>
+                <div className="flex justify-between text-white">
+                  <span>Annualized Premium Delta:</span>
+                  <span className={parseFloat(projection.diff) >= 0 ? "text-green-400" : "text-red-400"}>
+                    {parseFloat(projection.diff) >= 0 ? "+" : ""}${projection.diff}
+                  </span>
+                </div>
+                <div className="flex justify-between font-bold border-t border-border pt-1.5 text-primary">
+                  <span>Immediate Pro-Rata Adj:</span>
+                  <span>${projection.adjustment}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2 justify-end">
+              <button 
+                onClick={() => setActiveEndorsePolicy(null)}
+                className="bg-muted text-muted-foreground text-xs px-4 py-2 rounded-sm hover:bg-muted/70 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleEndorseSubmit}
+                disabled={submittingEndorsement}
+                className="bg-primary text-primary-foreground text-xs px-4 py-2 rounded-sm hover:bg-primary/90 transition-colors font-medium"
+              >
+                {submittingEndorsement ? "Submitting..." : "Apply Endorsement"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── History Snapshots Modal ─── */}
+      {activeHistoryPolicy && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-[#0b1b3d] border border-border rounded-sm max-w-3xl w-full p-6 space-y-4 shadow-xl">
+            <div className="flex justify-between items-center pb-2 border-b border-border">
+              <div>
+                <h3 className="font-['Barlow_Condensed'] text-lg font-semibold uppercase tracking-wide text-white">Historical Configuration Register</h3>
+                <p className="text-[11px] font-mono text-muted-foreground mt-0.5">Policy Ref: {activeHistoryPolicy.id}</p>
+              </div>
+              <button 
+                onClick={() => setActiveHistoryPolicy(null)}
+                className="text-muted-foreground hover:text-white transition-colors text-xs font-mono border border-border px-2 py-1 rounded-sm"
+              >
+                Close
+              </button>
+            </div>
+
+            {loadingHistory ? (
+              <div className="py-10 text-center text-xs text-muted-foreground font-mono">Loading history snapshots...</div>
+            ) : historyLogs.length === 0 ? (
+              <div className="py-10 text-center text-xs text-muted-foreground font-mono">No historical snapshots archived for this policy.</div>
+            ) : (
+              <div className="overflow-x-auto border border-border rounded-sm">
+                <table className="w-full text-xs text-left">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30 font-mono text-muted-foreground">
+                      <th className="px-3 py-2">Archived At</th>
+                      <th className="px-3 py-2">Modified By</th>
+                      <th className="px-3 py-2">Product Type</th>
+                      <th className="px-3 py-2">Base Premium</th>
+                      <th className="px-3 py-2">Expiry Date</th>
+                      <th className="px-3 py-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyLogs.map(h => (
+                      <tr key={h.id} className="border-b border-border last:border-0 hover:bg-muted/10 font-mono text-white/90">
+                        <td className="px-3 py-2 text-[10px] text-muted-foreground">{h.modifiedAt}</td>
+                        <td className="px-3 py-2 text-[10px]">{h.modifiedBy}</td>
+                        <td className="px-3 py-2 text-[10px]">{h.productType}</td>
+                        <td className="px-3 py-2">{fmt$(h.basePremium)}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{h.expiryDate}</td>
+                        <td className="px-3 py-2"><Badge status={h.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Claims ───────────────────────────────────────────────────
-function ClaimsView() {
+function ClaimsView({ claims = CLAIMS, onRefresh = () => {}, role }: {
+  claims?: any[];
+  onRefresh?: () => void;
+  role: Role;
+}) {
   const [tab, setTab] = useState<"list" | "fnol">("list");
   const [fnol, setFnol] = useState({ policy: "", date: "", type: "", description: "", location: "" });
+
+  const handleRegisterFnol = async () => {
+    if (!fnol.policy || !fnol.date || !fnol.type || !fnol.location || !fnol.description) {
+      alert("All fields marked * are required.");
+      return;
+    }
+    try {
+      await ClaimService.registerFnol({
+        policyNumber: fnol.policy,
+        incidentDate: fnol.date,
+        incidentType: fnol.type,
+        incidentLocation: fnol.location,
+        lossDescription: fnol.description
+      });
+      alert("FNOL registered successfully!");
+      setFnol({ policy: "", date: "", type: "", description: "", location: "" });
+      onRefresh();
+      setTab("list");
+    } catch (err: any) {
+      alert(err.message || "Failed to register FNOL claim");
+    }
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <SectionHeader
           title="Claims Management"
-          sub={`${CLAIMS.length} open claims · ${CLAIMS.filter(c => c.status === "Fraud Alert").length} fraud flags`}
+          sub={`${claims.length} open claims · ${claims.filter(c => c.status === "Fraud Alert").length} fraud flags`}
         />
         <div className="flex gap-1.5">
           {(["list","fnol"] as const).map(t => (
@@ -518,14 +794,37 @@ function ClaimsView() {
                 </tr>
               </thead>
               <tbody>
-                {CLAIMS.map((c, i) => (
+                {claims.map((c, i) => (
                   <tr key={c.id} className={`border-b border-border last:border-0 hover:bg-muted/30 transition-colors ${c.status === "Fraud Alert" ? "bg-red-50/40" : i % 2 !== 0 ? "bg-muted/10" : ""}`}>
                     <td className="px-4 py-3 font-mono text-xs text-primary font-medium">{c.id}</td>
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{c.policy}</td>
                     <td className="px-4 py-3 text-xs font-medium">{c.holder}</td>
                     <td className="px-4 py-3 text-xs">{c.type}</td>
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{c.date}</td>
-                    <td className="px-4 py-3 font-mono text-xs font-medium">{fmt$(c.reserve)}</td>
+                    <td className="px-4 py-3 font-mono text-xs font-medium">
+                      {(role === "admin" || role === "claims_handler") ? (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            defaultValue={c.reserve}
+                            onBlur={async (e) => {
+                              const newVal = parseFloat(e.target.value);
+                              if (!isNaN(newVal) && newVal !== c.reserve) {
+                                try {
+                                  await ClaimService.updateReserve(c.dbId, newVal);
+                                  onRefresh();
+                                } catch (err: any) {
+                                  alert(err.message || "Failed to update reserve");
+                                }
+                              }
+                            }}
+                            className="bg-muted/50 border border-border rounded-sm w-24 px-1.5 py-0.5 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary/30"
+                          />
+                        </div>
+                      ) : (
+                        fmt$(c.reserve)
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">{c.adjuster}</td>
                     <td className="px-4 py-3"><Badge status={c.status} /></td>
                   </tr>
@@ -595,7 +894,10 @@ function ClaimsView() {
               />
             </div>
             <div className="pt-1 flex gap-2.5">
-              <button className="bg-primary text-primary-foreground text-xs px-4 py-2 rounded-sm hover:bg-primary/90 transition-colors font-medium">
+              <button 
+                onClick={handleRegisterFnol}
+                className="bg-primary text-primary-foreground text-xs px-4 py-2 rounded-sm hover:bg-primary/90 transition-colors font-medium"
+              >
                 Register FNOL
               </button>
               <button
@@ -617,6 +919,8 @@ function UnderwriterView() {
   const [scores, setScores] = useState<Record<string,number>>({
     region: 65, assetAge: 40, priorClaims: 25, businessType: 55,
   });
+  const [overrides, setOverrides] = useState<any[]>([]);
+  const [quoteResult, setQuoteResult] = useState<any | null>(null);
 
   const composite = Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / Object.keys(scores).length);
   const riskLabel = composite >= 70 ? "HIGH RISK" : composite >= 45 ? "MEDIUM RISK" : "LOW RISK";
@@ -628,6 +932,60 @@ function UnderwriterView() {
     { key: "priorClaims",  label: "Prior Claims Frequency"     },
     { key: "businessType", label: "Business Classification"    },
   ];
+
+  const fetchOverrides = async () => {
+    try {
+      const data = await UnderwritingService.getAllOverrides();
+      const mapped = data.map((o: any) => ({
+        id: `OVR-${String(o.id).padStart(3, '0')}`,
+        dbId: o.id,
+        policy: o.policyNumber,
+        type: o.overrideType,
+        delta: o.deltaValue,
+        by: o.requestedBy,
+        status: o.status === "APPROVED" ? "Approved" : o.status === "REJECTED" ? "Rejected" : "Pending"
+      }));
+      setOverrides(mapped);
+    } catch (e) {
+      console.error("Failed to fetch overrides:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchOverrides();
+  }, []);
+
+  const handleGenerateQuote = async () => {
+    try {
+      const quote = await UnderwritingService.getQuote(
+        scores.region,
+        scores.assetAge,
+        scores.priorClaims,
+        scores.businessType
+      );
+      setQuoteResult(quote);
+    } catch (e) {
+      console.error("Failed to generate quote:", e);
+    }
+  };
+
+  const handleApprove = async (dbId: number) => {
+    try {
+      await UnderwritingService.approveOverride(dbId);
+      await fetchOverrides();
+    } catch (e) {
+      console.error("Failed to approve override:", e);
+    }
+  };
+
+  const handleReject = async (dbId: number) => {
+    try {
+      await UnderwritingService.rejectOverride(dbId);
+      await fetchOverrides();
+    } catch (e) {
+      console.error("Failed to reject override:", e);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -659,8 +1017,16 @@ function UnderwriterView() {
               <div className={`text-4xl font-['Barlow_Condensed'] font-bold mt-1 ${riskColor}`}>
                 {composite} <span className="text-xl">— {riskLabel}</span>
               </div>
+              {quoteResult && (
+                <div className="text-xs font-mono text-emerald-600 mt-2">
+                  Generated Premium: <span className="font-semibold">{fmt$(quoteResult.premiumQuote)}</span>
+                </div>
+              )}
             </div>
-            <button className="bg-primary text-primary-foreground text-xs px-4 py-2 rounded-sm hover:bg-primary/90 transition-colors font-medium">
+            <button 
+              onClick={handleGenerateQuote}
+              className="bg-primary text-primary-foreground text-xs px-4 py-2 rounded-sm hover:bg-primary/90 transition-colors font-medium"
+            >
               Generate Premium Quote
             </button>
           </div>
@@ -672,25 +1038,36 @@ function UnderwriterView() {
           <div className="bg-card border border-border rounded-sm p-5">
             <h3 className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-3">Pending Overrides</h3>
             <div className="space-y-3">
-              {[
-                { id: "OVR-084", policy: "POL-2024-008", type: "Limit Increase",  delta: "+$200,000",  by: "P. Hawthorne", status: "Pending"  },
-                { id: "OVR-081", policy: "POL-2024-002", type: "Rate Override",   delta: "−8% premium", by: "M. Chen",      status: "Approved" },
-              ].map(o => (
-                <div key={o.id} className="border border-border rounded-sm p-3 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] text-primary font-medium">{o.id}</span>
-                    <Badge status={o.status} />
-                  </div>
-                  <div className="text-xs">{o.type} · <span className="font-mono font-semibold">{o.delta}</span></div>
-                  <div className="text-[11px] text-muted-foreground font-mono">{o.policy} · {o.by}</div>
-                  {o.status === "Pending" && (
-                    <div className="flex gap-2 pt-0.5">
-                      <button className="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded-sm hover:bg-emerald-700 transition-colors">Approve</button>
-                      <button className="text-[11px] bg-muted text-muted-foreground px-2.5 py-1 rounded-sm hover:bg-muted/60 transition-colors">Reject</button>
+              {overrides.length === 0 ? (
+                <div className="text-[11px] text-muted-foreground font-mono py-2 text-center">No pending overrides</div>
+              ) : (
+                overrides.map(o => (
+                  <div key={o.id} className="border border-border rounded-sm p-3 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[10px] text-primary font-medium">{o.id}</span>
+                      <Badge status={o.status} />
                     </div>
-                  )}
-                </div>
-              ))}
+                    <div className="text-xs">{o.type} · <span className="font-mono font-semibold">{o.delta}</span></div>
+                    <div className="text-[11px] text-muted-foreground font-mono">{o.policy} · {o.by}</div>
+                    {o.status === "Pending" && (
+                      <div className="flex gap-2 pt-0.5">
+                        <button 
+                          onClick={() => handleApprove(o.dbId)}
+                          className="text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded-sm hover:bg-emerald-700 transition-colors"
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          onClick={() => handleReject(o.dbId)}
+                          className="text-[11px] bg-muted text-muted-foreground px-2.5 py-1 rounded-sm hover:bg-muted/60 transition-colors"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -813,6 +1190,33 @@ function FraudView() {
 // ─── Administration ───────────────────────────────────────────
 function AdminView() {
   const [tab, setTab] = useState<"users" | "audit" | "config">("users");
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+
+  const fetchLogs = async () => {
+    setLoadingLogs(true);
+    try {
+      const data = await AdminService.getAuditLogs();
+      const mapped = data.map((l: any) => ({
+        time: l.timestamp,
+        user: l.userEmail,
+        action: l.action,
+        target: l.target,
+        detail: l.detail
+      }));
+      setLogs(mapped);
+    } catch (e) {
+      console.error("Failed to load audit logs:", e);
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === "audit") {
+      fetchLogs();
+    }
+  }, [tab]);
 
   return (
     <div className="space-y-4">
@@ -870,29 +1274,35 @@ function AdminView() {
       {tab === "audit" && (
         <div className="bg-card border border-border rounded-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-border bg-muted/40 flex items-center justify-between">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Immutable Audit Log · 2024-11-13</span>
+            <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Immutable Audit Log</span>
             <button className="text-[11px] text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors font-mono">
               <Download size={10} /> Export CSV
             </button>
           </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/20">
-                {["Time","User","Action","Target","Detail"].map(h => <Th key={h}>{h}</Th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {AUDIT_LOG.map((e, i) => (
-                <tr key={i} className={`border-b border-border last:border-0 hover:bg-muted/30 transition-colors ${i % 2 !== 0 ? "bg-muted/10" : ""}`}>
-                  <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">{e.time}</td>
-                  <td className="px-4 py-3 font-mono text-[11px] text-primary">{e.user}</td>
-                  <td className="px-4 py-3 text-xs">{e.action}</td>
-                  <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">{e.target}</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{e.detail}</td>
+          {loadingLogs ? (
+            <div className="py-10 text-center text-xs text-muted-foreground font-mono">Loading audit logs...</div>
+          ) : logs.length === 0 ? (
+            <div className="py-10 text-center text-xs text-muted-foreground font-mono">No logs recorded.</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/20">
+                  {["Time","User","Action","Target","Detail"].map(h => <Th key={h}>{h}</Th>)}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {logs.map((e, i) => (
+                  <tr key={i} className={`border-b border-border last:border-0 hover:bg-muted/30 transition-colors ${i % 2 !== 0 ? "bg-muted/10" : ""}`}>
+                    <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">{e.time}</td>
+                    <td className="px-4 py-3 font-mono text-[11px] text-primary">{e.user}</td>
+                    <td className="px-4 py-3 text-xs">{e.action}</td>
+                    <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">{e.target}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">{e.detail}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 
@@ -1095,27 +1505,112 @@ export default function App() {
   const [view, setView] = useState<View>("dashboard");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role>("admin");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [policies, setPolicies] = useState<Policy[]>(POLICIES);
+  const [claims, setClaims] = useState<any[]>(CLAIMS);
 
-  const handleLogin = (nextRole: Role) => {
-    setRole(nextRole);
-    setSelectedRole(nextRole);
-    setView("dashboard");
-    setIsAuthenticated(true);
+  const loadClaims = async () => {
+    try {
+      const data = await ClaimService.getAll();
+      const mapped = data.map((c: any) => ({
+        id: c.claimNumber,
+        dbId: c.id,
+        policy: c.policyNumber,
+        holder: c.policyholderName,
+        type: c.incidentType,
+        date: c.incidentDate,
+        reserve: Number(c.grossReserve),
+        adjuster: c.adjuster,
+        status: c.status
+      }));
+      setClaims(mapped);
+    } catch (error) {
+      console.error("Failed to load claims:", error);
+    }
   };
 
-  const handleLogout = () => {
+  const loadPolicies = async () => {
+    try {
+      const data = await PolicyService.getAll();
+      const mapped: Policy[] = data.map((p: any) => ({
+        id: p.policyNumber,
+        dbId: p.id,
+        holder: p.policyholderName,
+        type: p.productType,
+        premium: Number(p.basePremium),
+        status: p.status,
+        expiry: p.expiryDate,
+        risk: "Medium"
+      }));
+      setPolicies(mapped);
+    } catch (error) {
+      console.error("Failed to load policies:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadPolicies();
+      loadClaims();
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = async (nextRole: Role, email?: string, password?: string) => {
+    setLoginLoading(true);
+    setLoginError(null);
+    try {
+      const finalEmail = email || `${nextRole}@ipcms.local`;
+      const finalPassword = password || "password123";
+      
+      const res = await AuthService.login(finalEmail, finalPassword);
+      localStorage.setItem("ipcms_token", res.token);
+      
+      // backend returns role in uppercase like "ADMIN" or "UNDERWRITER"
+      // frontend uses role keys like "admin" or "underwriter"
+      // Let's normalize it to match frontend expectation
+      const mappedRole = res.role.toLowerCase() as Role;
+      
+      setRole(mappedRole);
+      setSelectedRole(mappedRole);
+      setIsAuthenticated(true);
+      setView("dashboard");
+    } catch (err: any) {
+      setLoginError(err.message || "Authentication failed");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AuthService.logout();
+    } catch (err) {
+      console.error("Logout request failed on backend:", err);
+    }
+    localStorage.removeItem("ipcms_token");
     setIsAuthenticated(false);
+    setLoginError(null);
     setView("dashboard");
   };
 
   const handleRoleSelect = (nextRole: Role) => {
     setSelectedRole(nextRole);
     setIsAuthenticated(false);
+    setLoginError(null);
     setView("dashboard");
   };
 
   if (!isAuthenticated) {
-    return <LoginView selectedRole={selectedRole} onSelectRole={setSelectedRole} onLogin={handleLogin} />;
+    return (
+      <LoginView
+        selectedRole={selectedRole}
+        onSelectRole={setSelectedRole}
+        onLogin={handleLogin}
+        error={loginError}
+        loading={loginLoading}
+      />
+    );
   }
 
   return (
@@ -1125,8 +1620,8 @@ export default function App() {
         <TopBar view={view} />
         <main className="flex-1 overflow-y-auto p-5">
           {view === "dashboard"   && <DashboardView />}
-          {view === "policies"    && <PoliciesView />}
-          {view === "claims"      && <ClaimsView />}
+          {view === "policies"    && <PoliciesView policies={policies} onRefresh={loadPolicies} role={role} />}
+          {view === "claims"      && <ClaimsView claims={claims} onRefresh={loadClaims} role={role} />}
           {view === "underwriter" && <UnderwriterView />}
           {view === "renewals"    && <RenewalsView />}
           {view === "fraud"       && <FraudView />}
