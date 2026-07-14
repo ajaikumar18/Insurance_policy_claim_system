@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  app:
+    build: ./docker
+    container_name: insurance-policy-claims-system
+    ports:
+      - "8080:8080"
