@@ -1549,7 +1549,7 @@ function AdminView({ users, setUsers }: {
         role: u.role,
         office: u.officeId || "Singapore",
         cert: u.certificationNumber || "—",
-        active: u.isActive
+        active: u.active !== undefined ? u.active : u.isActive
       }));
       setUsers(mapped);
     } catch (e) {
