@@ -11,4 +11,5 @@ public interface UserService {
     List<User> getAllUsers();
     User getUserById(Long id);
     User createUser(UserCreateRequest request);
+    User toggleUserActive(Long id);
 }

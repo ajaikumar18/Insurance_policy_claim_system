@@ -153,4 +153,19 @@ public class UserServiceImpl implements UserService {
 
         return saved;
     }
+
+    @Override
+    @Transactional
+    public User toggleUserActive(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
+
+        user.setActive(!user.isActive());
+        User saved = userRepository.save(user);
+
+        // Record audit log
+        auditLogService.log("User Status Toggled", saved.getEmail(), "Active status changed to: " + saved.isActive());
+
+        return saved;
+    }
 }

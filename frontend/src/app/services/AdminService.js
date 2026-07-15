@@ -45,5 +45,21 @@ export const AdminService = {
       throw new Error(err.message || "Failed to create user");
     }
     return response.json();
+  },
+
+  async toggleUserActive(id) {
+    const token = localStorage.getItem("ipcms_token");
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const response = await fetch(`${API_BASE_URL}/api/admin/users/${id}/toggle-active`, {
+      method: "PUT",
+      headers
+    });
+    if (!response.ok) {
+      throw new Error("Failed to update user active status");
+    }
+    return response.json();
   }
 };

@@ -1653,9 +1653,14 @@ function AdminView({ users, setUsers }: {
                         Edit
                       </button>
                       <button 
-                        onClick={() => {
-                          setUsers(prev => prev.map(usr => usr.id === u.id ? { ...usr, active: !usr.active } : usr));
-                          alert(`User account ${u.active ? "deactivated" : "reactivated"} successfully!`);
+                        onClick={async () => {
+                          try {
+                            await AdminService.toggleUserActive(u.id);
+                            alert(`User account status updated successfully!`);
+                            fetchUsers();
+                          } catch (e: any) {
+                            alert(e.message || "Failed to toggle user status");
+                          }
                         }}
                         className="text-[11px] text-muted-foreground hover:text-red-600 transition-colors font-mono"
                       >
