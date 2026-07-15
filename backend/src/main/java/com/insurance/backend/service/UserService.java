@@ -10,4 +10,5 @@ public interface UserService {
     OnboardResponse onboardPolicyholder(OnboardRequest request);
     List<User> getAllUsers();
     User getUserById(Long id);
+    User createUser(UserCreateRequest request);
 }

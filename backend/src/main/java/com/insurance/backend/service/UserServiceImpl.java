@@ -115,4 +115,42 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
     }
+
+    @Override
+    @Transactional
+    public User createUser(UserCreateRequest request) {
+        // Validate email uniqueness
+        String finalEmail = request.getEmail().trim().toLowerCase();
+        if (userRepository.existsByEmail(finalEmail)) {
+            throw new EmailAlreadyExistsException("Email address is already in use");
+        }
+
+        // Validate username uniqueness
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new IllegalArgumentException("Username is already taken");
+        }
+
+        // Map role
+        Role role = Role.valueOf(request.getRole().toUpperCase());
+
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(finalEmail)
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .role(role)
+                .officeId(request.getOfficeId() != null ? request.getOfficeId() : "Singapore")
+                .certificationNumber(request.getCertificationNumber())
+                .legalName(request.getLegalName() != null ? request.getLegalName() : request.getUsername())
+                .isActive(true)
+                .amlFlagged(false)
+                .amlStatus("CLEARED")
+                .build();
+
+        User saved = userRepository.save(user);
+
+        // Record audit log
+        auditLogService.log("User Created", saved.getEmail(), "Role: " + saved.getRole() + ", office: " + saved.getOfficeId());
+
+        return saved;
+    }
 }

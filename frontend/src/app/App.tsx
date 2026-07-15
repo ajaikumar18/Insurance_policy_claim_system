@@ -1539,8 +1539,28 @@ function AdminView({ users, setUsers }: {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const data = await AdminService.getUsers();
+      const mapped = data.map((u: any) => ({
+        id: u.id,
+        name: u.legalName || u.username,
+        email: u.email,
+        role: u.role,
+        office: u.officeId || "Singapore",
+        cert: u.certificationNumber || "—",
+        active: u.isActive
+      }));
+      setUsers(mapped);
+    } catch (e) {
+      console.error("Failed to load users from database:", e);
+    }
+  };
+
   useEffect(() => {
-    if (tab === "audit") {
+    if (tab === "users") {
+      fetchUsers();
+    } else if (tab === "audit") {
       fetchLogs();
     }
   }, [tab]);
@@ -1565,29 +1585,38 @@ function AdminView({ users, setUsers }: {
           <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/40">
             <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">{users.length} registered users</span>
             <button 
-              onClick={() => {
+              onClick={async () => {
                 const name = prompt("Enter new user legal name:");
                 if (!name) return;
+                const username = prompt("Enter username:");
+                if (!username) return;
                 const email = prompt("Enter new user email reference:");
                 if (!email) return;
+                const password = prompt("Enter password (minimum 6 characters):", "password123");
+                if (!password || password.length < 6) {
+                  alert("Password must be at least 6 characters");
+                  return;
+                }
                 const role = prompt("Enter role (ADMIN, UNDERWRITER, CLAIMS_HANDLER, AGENT, POLICYHOLDER):", "UNDERWRITER");
                 if (!role) return;
                 const office = prompt("Enter office branch location:", "Singapore");
                 const cert = prompt("Enter employee or policyholder number:", "EMP-2026-99");
                 
-                setUsers(prev => [
-                  ...prev,
-                  {
-                    id: prev.length + 1,
-                    name,
+                try {
+                  await AdminService.createUser({
+                    username: username.trim(),
                     email: email.trim().toLowerCase(),
+                    password,
                     role: role.toUpperCase(),
-                    office: office || "Singapore",
-                    cert: cert || "PH-2026-000",
-                    active: true
-                  }
-                ]);
-                alert("User account onboarded successfully!");
+                    officeId: office || "Singapore",
+                    certificationNumber: cert || "EMP-2026-99",
+                    legalName: name
+                  });
+                  alert("User account onboarded successfully in PostgreSQL database!");
+                  fetchUsers();
+                } catch (e: any) {
+                  alert(e.message || "Failed to onboard user");
+                }
               }}
               className="flex items-center gap-1 text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-sm hover:bg-primary/90 transition-colors font-medium"
             >
