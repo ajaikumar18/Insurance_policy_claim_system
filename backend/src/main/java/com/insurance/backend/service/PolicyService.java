@@ -9,4 +9,6 @@ public interface PolicyService {
     Policy getPolicyById(Long id);
     EndorsementResponse endorsePolicy(Long id, EndorsementRequest request);
     List<PolicyHistoryDto> getPolicyHistory(Long id);
+    Policy createPolicy(PolicyCreateRequest request);
+    Policy renewPolicy(Long id);
 }

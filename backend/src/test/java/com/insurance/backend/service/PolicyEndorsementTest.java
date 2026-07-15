@@ -2,6 +2,7 @@ package com.insurance.backend.service;
 
 import com.insurance.backend.dto.EndorsementRequest;
 import com.insurance.backend.dto.EndorsementResponse;
+import com.insurance.backend.dto.PolicyCreateRequest;
 import com.insurance.backend.entity.Policy;
 import com.insurance.backend.entity.PolicyHistory;
 import com.insurance.backend.entity.Role;
@@ -112,5 +113,58 @@ class PolicyEndorsementTest {
 
         assertThrows(AccessDeniedException.class, () -> policyService.endorsePolicy(policyId, request));
         verify(policyHistoryRepository, never()).save(any(PolicyHistory.class));
+    }
+
+    @Test
+    void testCreatePolicy_Success() {
+        PolicyCreateRequest request = PolicyCreateRequest.builder()
+                .policyNumber("POL-2026-999")
+                .policyholderEmail("holder@ipcms.local")
+                .productType("Cyber Liability")
+                .basePremium(new BigDecimal("5000.00"))
+                .expiryDate(LocalDate.now().plusYears(1))
+                .build();
+
+        User mockUnderwriter = User.builder().email("underwriter@ipcms.local").role(Role.UNDERWRITER).build();
+        User mockHolder = User.builder().email("holder@ipcms.local").role(Role.POLICYHOLDER).build();
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("underwriter@ipcms.local");
+        when(userRepository.findByEmail("underwriter@ipcms.local")).thenReturn(Optional.of(mockUnderwriter));
+        when(userRepository.findByEmail("holder@ipcms.local")).thenReturn(Optional.of(mockHolder));
+        when(policyRepository.existsByPolicyNumber("POL-2026-999")).thenReturn(false);
+        when(policyRepository.save(any(Policy.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Policy created = policyService.createPolicy(request);
+
+        assertNotNull(created);
+        assertEquals("POL-2026-999", created.getPolicyNumber());
+        assertEquals("Cyber Liability", created.getProductType());
+        assertEquals(new BigDecimal("5000.00"), created.getBasePremium());
+        assertEquals(mockHolder, created.getPolicyholder());
+        verify(policyRepository, times(1)).save(any(Policy.class));
+        verify(auditLogService, times(1)).log(eq("Policy Created"), eq("POL-2026-999"), anyString());
+    }
+
+    @Test
+    void testCreatePolicy_AccessDenied_ForPolicyholder() {
+        PolicyCreateRequest request = PolicyCreateRequest.builder()
+                .policyNumber("POL-2026-999")
+                .policyholderEmail("holder@ipcms.local")
+                .productType("Cyber Liability")
+                .basePremium(new BigDecimal("5000.00"))
+                .expiryDate(LocalDate.now().plusYears(1))
+                .build();
+
+        User mockHolder = User.builder().email("holder@ipcms.local").role(Role.POLICYHOLDER).build();
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("holder@ipcms.local");
+        when(userRepository.findByEmail("holder@ipcms.local")).thenReturn(Optional.of(mockHolder));
+
+        assertThrows(AccessDeniedException.class, () -> policyService.createPolicy(request));
+        verify(policyRepository, never()).save(any(Policy.class));
     }
 }

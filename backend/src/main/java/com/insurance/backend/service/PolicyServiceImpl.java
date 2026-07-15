@@ -160,4 +160,88 @@ public class PolicyServiceImpl implements PolicyService {
                         .build())
                 .collect(Collectors.toList());
     }
+
+    @Override
+    @Transactional
+    public Policy createPolicy(PolicyCreateRequest request) {
+        // Enforce permissions: Creating policies is restricted to Underwriter, Agent, or Admin roles
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new AccessDeniedException("User must be authenticated");
+        }
+
+        String email = auth.getName();
+        User creator = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+
+        if (creator.getRole() == Role.POLICYHOLDER) {
+            throw new AccessDeniedException("Access denied: Policyholders cannot create policies");
+        }
+
+        // Find referencing policyholder by email
+        String searchEmail = request.getPolicyholderEmail().trim().toLowerCase();
+        User policyholder = userRepository.findByEmail(searchEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Policyholder user not found with email: " + request.getPolicyholderEmail()));
+
+        if (policyholder.getRole() != Role.POLICYHOLDER) {
+            throw new IllegalArgumentException("Target user email does not belong to a policyholder role");
+        }
+
+        // Check if policy number is unique
+        if (policyRepository.existsByPolicyNumber(request.getPolicyNumber())) {
+            throw new IllegalArgumentException("Policy number is already in use");
+        }
+
+        Policy policy = Policy.builder()
+                .policyNumber(request.getPolicyNumber())
+                .policyholder(policyholder)
+                .productType(request.getProductType())
+                .basePremium(request.getBasePremium())
+                .activeReserve(BigDecimal.ZERO)
+                .expiryDate(request.getExpiryDate())
+                .status("Active")
+                .build();
+
+        Policy saved = policyRepository.save(policy);
+
+        // Record audit log
+        auditLogService.log("Policy Created", saved.getPolicyNumber(),
+                "Product: " + saved.getProductType() + ", Premium: $" + saved.getBasePremium() + ", Policyholder: " + policyholder.getEmail());
+
+        return saved;
+    }
+
+    @Override
+    @Transactional
+    public Policy renewPolicy(Long id) {
+        // Enforce permissions: Renewing policies is restricted to Underwriter, Agent, or Admin roles
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new AccessDeniedException("User must be authenticated");
+        }
+
+        String email = auth.getName();
+        User creator = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+
+        if (creator.getRole() == Role.POLICYHOLDER) {
+            throw new AccessDeniedException("Access denied: Policyholders cannot renew policies");
+        }
+
+        Policy policy = policyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Policy not found with ID: " + id));
+
+        // Extend expiry date by 1 year (365 days)
+        LocalDate newExpiry = policy.getExpiryDate().plusYears(1);
+        policy.setExpiryDate(newExpiry);
+        policy.setStatus("Active");
+
+        Policy saved = policyRepository.save(policy);
+
+        // Record audit log
+        auditLogService.log("Policy Renewed", saved.getPolicyNumber(),
+                "Term extended by 1 year to: " + saved.getExpiryDate());
+
+        return saved;
+    }
 }

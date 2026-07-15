@@ -58,6 +58,18 @@ public class PolicyController {
         return ResponseEntity.ok(history);
     }
 
+    @PostMapping("/policies")
+    public ResponseEntity<PolicyDto> createPolicy(@Valid @RequestBody PolicyCreateRequest request) {
+        Policy created = policyService.createPolicy(request);
+        return new ResponseEntity<>(mapToDto(created), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/policies/{id}/renew")
+    public ResponseEntity<PolicyDto> renewPolicy(@PathVariable Long id) {
+        Policy renewed = policyService.renewPolicy(id);
+        return ResponseEntity.ok(mapToDto(renewed));
+    }
+
     private PolicyDto mapToDto(Policy policy) {
         return PolicyDto.builder()
                 .id(policy.getId())

@@ -56,5 +56,40 @@ export const PolicyService = {
       throw new Error("Failed to fetch policy history");
     }
     return response.json();
+  },
+
+  async createPolicy(policyData) {
+    const token = localStorage.getItem("ipcms_token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const response = await fetch(`${API_BASE_URL}/api/policies`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(policyData)
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to create policy");
+    }
+    return response.json();
+  },
+
+  async renewPolicy(id) {
+    const token = localStorage.getItem("ipcms_token");
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const response = await fetch(`${API_BASE_URL}/api/policies/${id}/renew`, {
+      method: "POST",
+      headers
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to renew policy");
+    }
+    return response.json();
   }
 };
