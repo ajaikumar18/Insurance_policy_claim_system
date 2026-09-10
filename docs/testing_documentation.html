@@ -23,7 +23,12 @@
     }
     body { background:#e2ecf6; color:var(--text-primary); font-size:13.5px; line-height:1.7; font-family:'Inter',sans-serif; }
     @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
       body { background:white; font-size:11px; }
+      .doc-wrapper { margin:0; max-width:100%; box-shadow:none; border-radius:0; }
       .no-print { display:none !important; }
       .page-break { page-break-before:always; }
       .avoid-break { page-break-inside:avoid; }
