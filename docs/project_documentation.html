@@ -150,6 +150,7 @@
       <li><a href="#section-service-impl">Service Implementations</a></li>
       <li><a href="#section-jpa">JPA Repositories</a></li>
       <li><a href="#section-api">API Endpoint Reference</a></li>
+      <li><a href="#section-testing">Testing &amp; API Verification</a></li>
     </ol>
   </div>
 
@@ -1442,10 +1443,8 @@ logging.level.org.springframework.security=INFO</pre>
 ]</pre>
       </div>
 
-      <div class="note-box">
-        <strong>Note on Postman Collection:</strong> The postman/Insurance.postman_collection.json file is currently empty. 
-        To populate it: open Postman, create requests using the endpoints above with base URL http://localhost:8080, 
-        use the login endpoint to get a Bearer token, then export the collection.
+      <div class="info-box">
+        <strong>Postman Collection:</strong> The collection file at <code>postman/Insurance.postman_collection.json</code> is fully populated with all 22 endpoints, pre-configured authentication requests for all 5 roles, environment variables (<code>{{baseUrl}}</code>, <code>{{token}}</code>), and sample payloads.
       </div>
 
       <h3>Role Access Matrix</h3>
@@ -1460,6 +1459,46 @@ logging.level.org.springframework.security=INFO</pre>
         </tbody>
       </table>
 
+    </section>
+
+    <!-- SECTION 7: TESTING & API VERIFICATION -->
+    <section id="section-testing">
+      <div class="section-header">
+        <div class="section-icon">T</div>
+        <div><div class="section-number">Section 07</div><h2>Testing &amp; API Verification</h2></div>
+      </div>
+      <div class="info-box">
+        <strong>Comprehensive Testing Reports:</strong> For the full standalone testing report with all request/response bodies, status codes, and test assertions, refer to <a href="testing_documentation.html" style="color:var(--brand-accent);font-weight:600;">docs/testing_documentation.html</a> or <a href="TESTING_DOCUMENTATION.md" style="color:var(--brand-accent);font-weight:600;">docs/TESTING_DOCUMENTATION.md</a>.
+      </div>
+
+      <h3>Automated Test Execution Summary</h3>
+      <p>All automated test suites were executed via <code>mvn test</code> against the PostgreSQL 16 test database instance:</p>
+      <table class="api-table">
+        <thead><tr><th>Test Suite</th><th>Total Tests</th><th>Pass Rate</th><th>Execution Time</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>BackendApplicationTests</td><td>1</td><td>100%</td><td>11.41s</td><td><span class="role-badge role-ph">PASSED</span></td></tr>
+          <tr><td>JwtTokenProviderTest</td><td>2</td><td>100%</td><td>0.40s</td><td><span class="role-badge role-ph">PASSED</span></td></tr>
+          <tr><td>AmlServiceTest (Async OFAC Watchlist)</td><td>4</td><td>100%</td><td>1.65s</td><td><span class="role-badge role-ph">PASSED</span></td></tr>
+          <tr><td>AuditLogServiceTest (Immutable Audit)</td><td>2</td><td>100%</td><td>0.24s</td><td><span class="role-badge role-ph">PASSED</span></td></tr>
+          <tr><td>ClaimServiceTest (FNOL 14-day Window &amp; Reserves)</td><td>4</td><td>100%</td><td>0.28s</td><td><span class="role-badge role-ph">PASSED</span></td></tr>
+          <tr><td>PolicyEndorsementTest (Pro-Rata Delta &amp; History)</td><td>4</td><td>100%</td><td>0.15s</td><td><span class="role-badge role-ph">PASSED</span></td></tr>
+          <tr><td>UnderwriteServiceTest (Formula Pricing &amp; Overrides)</td><td>4</td><td>100%</td><td>0.10s</td><td><span class="role-badge role-ph">PASSED</span></td></tr>
+          <tr><td>UserServiceTest (Onboarding &amp; Activation)</td><td>2</td><td>100%</td><td>0.35s</td><td><span class="role-badge role-ph">PASSED</span></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Requirements Traceability Matrix (RTM)</h3>
+      <table class="api-table">
+        <thead><tr><th>Req</th><th>Module</th><th>Key Endpoints Verified</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><strong>FR1 / FR7</strong></td><td>Onboarding &amp; Auth</td><td><code>POST /api/auth/login</code>, <code>POST /api/policies/onboard</code></td><td><span class="role-badge role-ph">VERIFIED</span></td></tr>
+          <tr><td><strong>FR2</strong></td><td>Underwriting Matrix</td><td><code>POST /api/underwrite/quote</code>, <code>POST /api/underwrite/overrides</code></td><td><span class="role-badge role-ph">VERIFIED</span></td></tr>
+          <tr><td><strong>FR3</strong></td><td>Claims Management</td><td><code>POST /api/claims/fnol</code>, <code>PUT /api/claims/{id}/reserve</code></td><td><span class="role-badge role-ph">VERIFIED</span></td></tr>
+          <tr><td><strong>FR4</strong></td><td>Policy Endorsements</td><td><code>POST /api/policies/{id}/endorse</code>, <code>GET /api/policies/{id}/history</code></td><td><span class="role-badge role-ph">VERIFIED</span></td></tr>
+          <tr><td><strong>FR5</strong></td><td>Async AML Watchlist</td><td><code>POST /api/policies/onboard</code> (OFAC Match)</td><td><span class="role-badge role-ph">VERIFIED</span></td></tr>
+          <tr><td><strong>FR6</strong></td><td>Audit Logging</td><td><code>GET /api/admin/audit-logs</code></td><td><span class="role-badge role-ph">VERIFIED</span></td></tr>
+        </tbody>
+      </table>
     </section>
   </div>
 

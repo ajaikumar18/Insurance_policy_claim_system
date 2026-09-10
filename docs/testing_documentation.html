@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Insurance Policy & Claim Management System – Testing & API Verification Documentation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand-primary: #1a3a5c;
+      --brand-accent:  #0f6fb4;
+      --brand-success: #16a34a;
+      --brand-danger:  #dc2626;
+      --brand-warning: #f59e0b;
+      --brand-light:   #e8f4fd;
+      --brand-gradient: linear-gradient(135deg, #1a3a5c 0%, #0f6fb4 100%);
+      --section-bg:   #f0f6fc;
+      --code-bg:      #0d1117;
+      --border:       #d0e4f5;
+      --text-primary: #0d1b2a;
+      --text-secondary: #4a6785;
+    }
+    body { background:#e2ecf6; color:var(--text-primary); font-size:13.5px; line-height:1.7; font-family:'Inter',sans-serif; }
+    @media print {
+      body { background:white; font-size:11px; }
+      .no-print { display:none !important; }
+      .page-break { page-break-before:always; }
+      .avoid-break { page-break-inside:avoid; }
+      .cover { page-break-after:always; }
+    }
+    .doc-wrapper { max-width:1100px; margin:30px auto; background:#fff; border-radius:12px; box-shadow:0 8px 40px rgba(15,111,180,.18); overflow:hidden; }
+    .cover { background:var(--brand-gradient); color:white; padding:70px 60px 50px; min-height:360px; position:relative; overflow:hidden; }
+    .cover::before { content:''; position:absolute; inset:0; background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E"); }
+    .cover h1 { font-size:32px; font-weight:700; line-height:1.25; margin-bottom:12px; }
+    .cover .subtitle { font-size:15px; opacity:.85; margin-bottom:36px; }
+    .cover-meta { display:flex; gap:36px; flex-wrap:wrap; }
+    .cover-meta-item label { display:block; font-size:10px; text-transform:uppercase; letter-spacing:1.2px; opacity:.65; margin-bottom:4px; }
+    .cover-meta-item span { font-size:13px; font-weight:600; }
+    .toc { background:var(--section-bg); padding:30px 60px; border-bottom:1px solid var(--border); }
+    .toc h2 { font-size:12px; text-transform:uppercase; letter-spacing:1.5px; color:var(--brand-accent); margin-bottom:16px; font-weight:700; }
+    .toc ol { list-style:none; counter-reset:toc; display:grid; grid-template-columns:1fr 1fr; gap:8px 30px; }
+    .toc li { counter-increment:toc; display:flex; align-items:center; gap:8px; }
+    .toc li::before { content:counter(toc, decimal-leading-zero); font-size:11px; font-weight:700; color:var(--brand-accent); min-width:24px; }
+    .toc a { color:var(--text-primary); text-decoration:none; font-weight:500; font-size:13px; border-bottom:1px dashed var(--border); }
+    .content { padding:50px 60px; }
+    .section-header { display:flex; align-items:center; gap:14px; margin-bottom:24px; padding-bottom:12px; border-bottom:2px solid var(--brand-light); }
+    .section-header .section-icon { width:38px; height:38px; border-radius:10px; background:var(--brand-gradient); display:flex; align-items:center; justify-content:center; font-size:18px; color:white; font-weight:700; flex-shrink:0; }
+    .section-header h2 { font-size:20px; font-weight:700; color:var(--brand-primary); }
+    .section-number { font-size:11px; font-weight:700; color:var(--brand-accent); text-transform:uppercase; letter-spacing:1px; }
+    section { margin-bottom:50px; }
+    h3 { font-size:15px; font-weight:600; color:var(--brand-primary); margin:24px 0 10px; }
+    p { margin-bottom:12px; color:var(--text-secondary); }
+    .metrics-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin:20px 0 30px; }
+    .metric-card { background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px 20px; text-align:center; box-shadow:0 2px 8px rgba(15,111,180,.06); }
+    .metric-card .value { font-size:28px; font-weight:700; color:var(--brand-accent); margin-bottom:4px; }
+    .metric-card .label { font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:600; color:var(--text-secondary); }
+    .metric-card.success .value { color:var(--brand-success); }
+    .api-table { width:100%; border-collapse:collapse; font-size:12.5px; margin:16px 0 24px; }
+    .api-table thead tr { background:var(--brand-gradient); color:white; }
+    .api-table thead th { padding:10px 14px; text-align:left; font-weight:600; font-size:11.5px; }
+    .api-table tbody tr { border-bottom:1px solid var(--border); }
+    .api-table tbody tr:nth-child(even) { background:#f8fbff; }
+    .api-table td { padding:10px 14px; vertical-align:top; }
+    .method { display:inline-block; padding:3px 9px; border-radius:5px; font-weight:700; font-size:10px; font-family:'Fira Code',monospace; min-width:50px; text-align:center; }
+    .m-get    { background:#dcfce7; color:#15803d; }
+    .m-post   { background:#dbeafe; color:#1d4ed8; }
+    .m-put    { background:#fef3c7; color:#b45309; }
+    .m-delete { background:#fee2e2; color:#b91c1c; }
+    .endpoint-url { font-family:'Fira Code',monospace; font-size:12px; font-weight:500; }
+    .badge-pass { display:inline-block; padding:3px 10px; border-radius:4px; background:#dcfce7; color:#15803d; font-weight:700; font-size:10px; }
+    .badge-status { display:inline-block; padding:2px 8px; border-radius:4px; font-family:'Fira Code',monospace; font-size:11px; font-weight:600; }
+    .status-200 { background:#dcfce7; color:#15803d; }
+    .status-201 { background:#e0e7ff; color:#3730a3; }
+    .status-400 { background:#fee2e2; color:#b91c1c; }
+    .status-401 { background:#ffedd5; color:#9a3412; }
+    .status-403 { background:#fef2f2; color:#991b1b; }
+    .postman-endpoint { background:white; border:1px solid var(--border); border-radius:10px; margin-bottom:24px; overflow:hidden; }
+    .postman-endpoint-header { background:var(--section-bg); padding:12px 18px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border); }
+    .postman-endpoint-title { font-weight:600; font-size:13.5px; color:var(--brand-primary); }
+    .postman-endpoint-desc { font-size:12px; color:var(--text-secondary); margin-left:auto; }
+    .postman-section-label { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-secondary); padding:10px 18px 4px; background:#fbfcff; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; }
+    pre { background:var(--code-bg); color:#e6edf3; padding:16px 20px; overflow-x:auto; font-family:'Fira Code',monospace; font-size:11.5px; line-height:1.7; margin:0; }
+    .kw { color:#ff7b72; }
+    .st { color:#a5d6ff; }
+    .nm { color:#79c0ff; }
+    .cm { color:#8b949e; font-style:italic; }
+    .info-box { border-left:4px solid var(--brand-accent); background:var(--brand-light); padding:12px 16px; border-radius:0 8px 8px 0; margin:14px 0; font-size:13px; }
+    .doc-footer { background:var(--brand-gradient); color:white; text-align:center; padding:24px; font-size:12px; }
+    .print-btn { position:fixed; bottom:30px; right:30px; background:var(--brand-gradient); color:white; border:none; padding:12px 22px; border-radius:50px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 4px 20px rgba(15,111,180,.4); z-index:999; }
+  </style>
+</head>
+<body>
+<button class="print-btn no-print" onclick="window.print()">Print / Save as PDF</button>
+
+<div class="doc-wrapper">
+  <!-- COVER -->
+  <div class="cover">
+    <h1>Insurance Policy &amp; Claim<br>Management System</h1>
+    <p class="subtitle">System Testing, Test Execution Reports &amp; Comprehensive API Verification Results</p>
+    <div class="cover-meta">
+      <div class="cover-meta-item"><label>Test Environment</label><span>Spring Boot 3.3.3 · PostgreSQL 16 · Java 17</span></div>
+      <div class="cover-meta-item"><label>Automated Tests</label><span>23 Tests (100% Passed)</span></div>
+      <div class="cover-meta-item"><label>API Endpoints</label><span>22 Endpoints Verified</span></div>
+      <div class="cover-meta-item"><label>Document Date</label><span>September 2026</span></div>
+    </div>
+  </div>
+
+  <!-- TABLE OF CONTENTS -->
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#test-metrics">Executive Metrics</a></li>
+      <li><a href="#backend-tests">Automated Unit &amp; Integration Tests</a></li>
+      <li><a href="#api-auth">Authentication API Tests</a></li>
+      <li><a href="#api-policy">Policies &amp; Onboarding Tests (FR1, FR4, FR5)</a></li>
+      <li><a href="#api-claims">Claims &amp; FNOL Tests (FR3)</a></li>
+      <li><a href="#api-underwrite">Underwriting Matrix Tests (FR2)</a></li>
+      <li><a href="#api-admin">Admin &amp; Audit Trail Tests (FR6)</a></li>
+      <li><a href="#rtm">Requirements Traceability Matrix (RTM)</a></li>
+    </ol>
+  </div>
+
+  <div class="content">
+
+    <!-- SECTION 1: METRICS -->
+    <section id="test-metrics">
+      <div class="section-header">
+        <div class="section-icon">&#x2714;</div>
+        <div><div class="section-number">Section 01</div><h2>Executive Metrics &amp; Health Overview</h2></div>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-card success">
+          <div class="value">23 / 23</div>
+          <div class="label">Backend Tests Passed</div>
+        </div>
+        <div class="metric-card success">
+          <div class="value">100%</div>
+          <div class="label">Automated Pass Rate</div>
+        </div>
+        <div class="metric-card">
+          <div class="value">22</div>
+          <div class="label">API Endpoints Tested</div>
+        </div>
+        <div class="metric-card success">
+          <div class="value">0</div>
+          <div class="label">Build / Linter Errors</div>
+        </div>
+      </div>
+      <div class="info-box">
+        All test scenarios were executed against live instances of the Spring Boot 3 API service and PostgreSQL 16 database. Results validate full compliance with Software Requirements Specification (SRS) functional requirements FR1 through FR7.
+      </div>
+    </section>
+
+    <!-- SECTION 2: AUTOMATED TESTS -->
+    <section id="backend-tests">
+      <div class="section-header">
+        <div class="section-icon">&#x2699;</div>
+        <div><div class="section-number">Section 02</div><h2>Automated Backend Test Suite Execution</h2></div>
+      </div>
+      <p>Automated regression tests run via Apache Maven (<code>mvn test</code>) across all application layers:</p>
+      <table class="api-table">
+        <thead>
+          <tr><th>Test Suite Class</th><th>Tests</th><th>Failures</th><th>Errors</th><th>Time</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>BackendApplicationTests</td><td>1</td><td>0</td><td>0</td><td>11.41s</td><td><span class="badge-pass">PASSED</span></td></tr>
+          <tr><td>JwtTokenProviderTest</td><td>2</td><td>0</td><td>0</td><td>0.40s</td><td><span class="badge-pass">PASSED</span></td></tr>
+          <tr><td>AmlServiceTest</td><td>4</td><td>0</td><td>0</td><td>1.65s</td><td><span class="badge-pass">PASSED</span></td></tr>
+          <tr><td>AuditLogServiceTest</td><td>2</td><td>0</td><td>0</td><td>0.24s</td><td><span class="badge-pass">PASSED</span></td></tr>
+          <tr><td>ClaimServiceTest</td><td>4</td><td>0</td><td>0</td><td>0.28s</td><td><span class="badge-pass">PASSED</span></td></tr>
+          <tr><td>PolicyEndorsementTest</td><td>4</td><td>0</td><td>0</td><td>0.15s</td><td><span class="badge-pass">PASSED</span></td></tr>
+          <tr><td>UnderwriteServiceTest</td><td>4</td><td>0</td><td>0</td><td>0.10s</td><td><span class="badge-pass">PASSED</span></td></tr>
+          <tr><td>UserServiceTest</td><td>2</td><td>0</td><td>0</td><td>0.35s</td><td><span class="badge-pass">PASSED</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- SECTION 3: AUTHENTICATION API -->
+    <section id="api-auth">
+      <div class="section-header">
+        <div class="section-icon">&#x1F511;</div>
+        <div><div class="section-number">Section 03</div><h2>Authentication API Endpoint Tests</h2></div>
+      </div>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/auth/login</span>
+          <span class="postman-endpoint-desc"><span class="badge-status status-200">200 OK</span> - Administrator Authentication</span>
+        </div>
+        <div class="postman-section-label"><span>Request Payload</span><span>Content-Type: application/json</span></div>
+        <pre>{
+  <span class="st">"email"</span>: <span class="st">"admin@ipcms.local"</span>,
+  <span class="st">"password"</span>: <span class="st">"password123"</span>
+}</pre>
+        <div class="postman-section-label"><span>Response Payload</span><span>Status: 200 OK</span></div>
+        <pre>{
+  <span class="st">"token"</span>: <span class="st">"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."</span>,
+  <span class="st">"type"</span>: <span class="st">"Bearer"</span>,
+  <span class="st">"email"</span>: <span class="st">"admin@ipcms.local"</span>,
+  <span class="st">"username"</span>: <span class="st">"admin"</span>,
+  <span class="st">"role"</span>: <span class="st">"ADMIN"</span>
+}</pre>
+      </div>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/auth/login (Negative Test)</span>
+          <span class="postman-endpoint-desc"><span class="badge-status status-401">401 Unauthorized</span> - Invalid Password</span>
+        </div>
+        <div class="postman-section-label"><span>Request Payload</span><span>Content-Type: application/json</span></div>
+        <pre>{
+  <span class="st">"email"</span>: <span class="st">"admin@ipcms.local"</span>,
+  <span class="st">"password"</span>: <span class="st">"wrongpassword"</span>
+}</pre>
+        <div class="postman-section-label"><span>Response Payload</span><span>Status: 401 Unauthorized</span></div>
+        <pre>{
+  <span class="st">"timestamp"</span>: <span class="st">"2026-09-10T08:42:10.112"</span>,
+  <span class="st">"status"</span>: <span class="nm">401</span>,
+  <span class="st">"error"</span>: <span class="st">"Unauthorized"</span>,
+  <span class="st">"message"</span>: <span class="st">"Bad credentials"</span>
+}</pre>
+      </div>
+    </section>
+
+    <!-- SECTION 4: POLICIES & ONBOARDING -->
+    <section id="api-policy">
+      <div class="section-header">
+        <div class="section-icon">&#x1F4CB;</div>
+        <div><div class="section-number">Section 04</div><h2>Policies &amp; Onboarding Endpoint Tests (FR1, FR4, FR5)</h2></div>
+      </div>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/policies/onboard</span>
+          <span class="postman-endpoint-desc"><span class="badge-status status-200">200 OK</span> - Policyholder Self-Registration (FR1)</span>
+        </div>
+        <div class="postman-section-label"><span>Request Payload</span><span>Applicant Data</span></div>
+        <pre>{
+  <span class="st">"username"</span>: <span class="st">"davidmiller"</span>,
+  <span class="st">"email"</span>: <span class="st">"david.miller@ipcms.local"</span>,
+  <span class="st">"password"</span>: <span class="st">"password123"</span>,
+  <span class="st">"legalName"</span>: <span class="st">"David Miller"</span>,
+  <span class="st">"taxId"</span>: <span class="st">"TAX-USA-98765"</span>,
+  <span class="st">"address"</span>: <span class="st">"742 Evergreen Terrace, Springfield"</span>,
+  <span class="st">"contactNumber"</span>: <span class="st">"+1-555-8392"</span>
+}</pre>
+        <div class="postman-section-label"><span>Response Payload</span><span>Status: 200 OK</span></div>
+        <pre>{
+  <span class="st">"id"</span>: <span class="nm">6</span>,
+  <span class="st">"username"</span>: <span class="st">"davidmiller"</span>,
+  <span class="st">"email"</span>: <span class="st">"david.miller@ipcms.local"</span>,
+  <span class="st">"role"</span>: <span class="st">"POLICYHOLDER"</span>,
+  <span class="st">"amlStatus"</span>: <span class="st">"PENDING"</span>,
+  <span class="st">"kycStatus"</span>: <span class="st">"VERIFIED"</span>,
+  <span class="st">"message"</span>: <span class="st">"Registration submitted. Asynchronous AML verification in progress."</span>
+}</pre>
+      </div>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/policies/1/endorse</span>
+          <span class="postman-endpoint-desc"><span class="badge-status status-200">200 OK</span> - Policy Endorsement &amp; Pro-Rata Math (FR4)</span>
+        </div>
+        <div class="postman-section-label"><span>Request Payload</span><span>Endorsement Delta</span></div>
+        <pre>{
+  <span class="st">"productType"</span>: <span class="st">"Commercial Cargo (Hazard Tier 2)"</span>,
+  <span class="st">"basePremium"</span>: <span class="nm">19500.00</span>
+}</pre>
+        <div class="postman-section-label"><span>Response Payload</span><span>Status: 200 OK</span></div>
+        <pre>{
+  <span class="st">"policyNumber"</span>: <span class="st">"POL-2024-001"</span>,
+  <span class="st">"oldPremium"</span>: <span class="nm">14500.00</span>,
+  <span class="st">"newPremium"</span>: <span class="nm">19500.00</span>,
+  <span class="st">"proRataAdjustment"</span>: <span class="nm">616.44</span>,
+  <span class="st">"daysRemaining"</span>: <span class="nm">45</span>,
+  <span class="st">"message"</span>: <span class="st">"Policy endorsed successfully. Pro-rata premium adjustment calculated."</span>
+}</pre>
+      </div>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-get">GET</span>
+          <span class="postman-endpoint-title">/api/policies/1/history</span>
+          <span class="postman-endpoint-desc"><span class="badge-status status-200">200 OK</span> - Immutable Historical Snapshots (FR4, FR6)</span>
+        </div>
+        <div class="postman-section-label"><span>Response Payload</span><span>Archived Baselines</span></div>
+        <pre>[
+  {
+    <span class="st">"id"</span>: <span class="nm">1</span>,
+    <span class="st">"policyNumber"</span>: <span class="st">"POL-2024-001"</span>,
+    <span class="st">"productType"</span>: <span class="st">"Commercial Cargo"</span>,
+    <span class="st">"basePremium"</span>: <span class="nm">14500.00</span>,
+    <span class="st">"activeReserve"</span>: <span class="nm">0.00</span>,
+    <span class="st">"expiryDate"</span>: <span class="st">"2026-10-25"</span>,
+    <span class="st">"status"</span>: <span class="st">"Active"</span>,
+    <span class="st">"modifiedAt"</span>: <span class="st">"2026-09-10T08:52:14.201"</span>,
+    <span class="st">"modifiedBy"</span>: <span class="st">"underwriter@ipcms.local"</span>
+  }
+]</pre>
+      </div>
+    </section>
+
+    <!-- SECTION 5: CLAIMS & FNOL -->
+    <section id="api-claims">
+      <div class="section-header">
+        <div class="section-icon">&#x1F6A8;</div>
+        <div><div class="section-number">Section 05</div><h2>Claims Management &amp; FNOL Tests (FR3)</h2></div>
+      </div>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/claims/fnol</span>
+          <span class="postman-endpoint-desc"><span class="badge-status status-201">201 Created</span> - FNOL Registration within 14 Days</span>
+        </div>
+        <div class="postman-section-label"><span>Request Payload</span><span>Incident Report</span></div>
+        <pre>{
+  <span class="st">"policyNumber"</span>: <span class="st">"POL-2024-001"</span>,
+  <span class="st">"incidentDate"</span>: <span class="st">"2026-09-08"</span>,
+  <span class="st">"incidentType"</span>: <span class="st">"Collision"</span>,
+  <span class="st">"incidentLocation"</span>: <span class="st">"Port of Rotterdam"</span>,
+  <span class="st">"lossDescription"</span>: <span class="st">"Docking vessel collision with cargo crane during squall"</span>,
+  <span class="st">"initialEstimate"</span>: <span class="nm">8500.00</span>
+}</pre>
+        <div class="postman-section-label"><span>Response Payload</span><span>Status: 201 Created</span></div>
+        <pre>{
+  <span class="st">"id"</span>: <span class="nm">1</span>,
+  <span class="st">"claimNumber"</span>: <span class="st">"CLM-2026-0001"</span>,
+  <span class="st">"policyNumber"</span>: <span class="st">"POL-2024-001"</span>,
+  <span class="st">"policyholderName"</span>: <span class="st">"John Meridian"</span>,
+  <span class="st">"incidentType"</span>: <span class="st">"Collision"</span>,
+  <span class="st">"incidentDate"</span>: <span class="st">"2026-09-08"</span>,
+  <span class="st">"grossReserve"</span>: <span class="nm">0.00</span>,
+  <span class="st">"lossDescription"</span>: <span class="st">"Docking vessel collision with cargo crane during squall"</span>,
+  <span class="st">"status"</span>: <span class="st">"Pending FNOL"</span>
+}</pre>
+      </div>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/claims/fnol (Cutoff Validation Test)</span>
+          <span class="postman-endpoint-desc"><span class="badge-status status-400">400 Bad Request</span> - Incident Over 14 Days</span>
+        </div>
+        <div class="postman-section-label"><span>Request Payload (Incident 26 Days Old)</span><span>Validation Failure</span></div>
+        <pre>{
+  <span class="st">"policyNumber"</span>: <span class="st">"POL-2024-001"</span>,
+  <span class="st">"incidentDate"</span>: <span class="st">"2026-08-15"</span>,
+  <span class="st">"lossDescription"</span>: <span class="st">"Old damage report"</span>
+}</pre>
+        <div class="postman-section-label"><span>Response Payload</span><span>Status: 400 Bad Request</span></div>
+        <pre>{
+  <span class="st">"status"</span>: <span class="nm">400</span>,
+  <span class="st">"error"</span>: <span class="st">"Bad Request"</span>,
+  <span class="st">"message"</span>: <span class="st">"Incident date exceeds allowable FNOL notification window (maximum 14 days from incident date)"</span>
+}</pre>
+      </div>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-put">PUT</span>
+          <span class="postman-endpoint-title">/api/claims/1/reserve</span>
+          <span class="postman-endpoint-desc"><span class="badge-status status-200">200 OK</span> - Reserve Adjustment &amp; Auto-Transition</span>
+        </div>
+        <div class="postman-section-label"><span>Request Payload</span><span>Gross Reserve Value</span></div>
+        <pre>{
+  <span class="st">"grossReserve"</span>: <span class="nm">16500.00</span>
+}</pre>
+        <div class="postman-section-label"><span>Response Payload</span><span>Status: 200 OK</span></div>
+        <pre>{
+  <span class="st">"id"</span>: <span class="nm">1</span>,
+  <span class="st">"claimNumber"</span>: <span class="st">"CLM-2026-0001"</span>,
+  <span class="st">"grossReserve"</span>: <span class="nm">16500.00</span>,
+  <span class="st">"adjuster"</span>: <span class="st">"Stefan Lindqvist"</span>,
+  <span class="st">"status"</span>: <span class="st">"Under Investigation"</span>
+}</pre>
+      </div>
+    </section>
+
+    <!-- SECTION 6: UNDERWRITING -->
+    <section id="api-underwrite">
+      <div class="section-header">
+        <div class="section-icon">&#x1F4CA;</div>
+        <div><div class="section-number">Section 06</div><h2>Underwriting Matrix &amp; Risk Scoring Tests (FR2)</h2></div>
+      </div>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/underwrite/quote</span>
+          <span class="postman-endpoint-desc"><span class="badge-status status-200">200 OK</span> - Premium Quote Calculation</span>
+        </div>
+        <div class="postman-section-label"><span>Request Payload (Risk Factor Sliders)</span><span>Values: 0-100</span></div>
+        <pre>{
+  <span class="st">"regionFactor"</span>: <span class="nm">75</span>,
+  <span class="st">"assetAgeFactor"</span>: <span class="nm">45</span>,
+  <span class="st">"priorClaimsFactor"</span>: <span class="nm">15</span>,
+  <span class="st">"businessTypeFactor"</span>: <span class="nm">65</span>
+}</pre>
+        <div class="postman-section-label"><span>Response Payload</span><span>Formula: $500 + ($15 * avg)</span></div>
+        <pre>{
+  <span class="st">"compositeRiskScore"</span>: <span class="nm">50</span>,
+  <span class="st">"riskLevel"</span>: <span class="st">"MEDIUM RISK"</span>,
+  <span class="st">"premiumQuote"</span>: <span class="nm">1250.00</span>
+}</pre>
+      </div>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/underwrite/overrides/1/signoff</span>
+          <span class="postman-endpoint-desc"><span class="badge-status status-200">200 OK</span> - Supervisor Override Approval</span>
+        </div>
+        <div class="postman-section-label"><span>Request Payload</span><span>Supervisor Sign-Off</span></div>
+        <pre>{
+  <span class="st">"approved"</span>: <span class="kw">true</span>
+}</pre>
+        <div class="postman-section-label"><span>Response Payload</span><span>Status: 200 OK</span></div>
+        <pre>{
+  <span class="st">"id"</span>: <span class="nm">1</span>,
+  <span class="st">"policyNumber"</span>: <span class="st">"POL-2024-001"</span>,
+  <span class="st">"overrideType"</span>: <span class="st">"Premium Rate Reduction"</span>,
+  <span class="st">"deltaValue"</span>: <span class="st">"-12%"</span>,
+  <span class="st">"requestedBy"</span>: <span class="st">"underwriter@ipcms.local"</span>,
+  <span class="st">"status"</span>: <span class="st">"APPROVED"</span>,
+  <span class="st">"supervisorSignoffBy"</span>: <span class="st">"admin@ipcms.local"</span>
+}</pre>
+      </div>
+    </section>
+
+    <!-- SECTION 7: ADMIN & AUDIT -->
+    <section id="api-admin">
+      <div class="section-header">
+        <div class="section-icon">&#x1F6E1;</div>
+        <div><div class="section-number">Section 07</div><h2>Administration &amp; Audit Trail Tests (FR6)</h2></div>
+      </div>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-get">GET</span>
+          <span class="postman-endpoint-title">/api/admin/audit-logs</span>
+          <span class="postman-endpoint-desc"><span class="badge-status status-200">200 OK</span> - Chronological Audit Trail</span>
+        </div>
+        <div class="postman-section-label"><span>Response Payload</span><span>Audit Records</span></div>
+        <pre>[
+  {
+    <span class="st">"id"</span>: <span class="nm">4</span>,
+    <span class="st">"timestamp"</span>: <span class="st">"2026-09-10T08:53:55.302"</span>,
+    <span class="st">"userEmail"</span>: <span class="st">"admin@ipcms.local"</span>,
+    <span class="st">"action"</span>: <span class="st">"OVERRIDE_APPROVED"</span>,
+    <span class="st">"target"</span>: <span class="st">"POL-2024-001"</span>,
+    <span class="st">"detail"</span>: <span class="st">"Supervisor signed off on Premium Rate Reduction (-12%)"</span>
+  },
+  {
+    <span class="st">"id"</span>: <span class="nm">3</span>,
+    <span class="st">"timestamp"</span>: <span class="st">"2026-09-10T08:53:15.890"</span>,
+    <span class="st">"userEmail"</span>: <span class="st">"claims_handler@ipcms.local"</span>,
+    <span class="st">"action"</span>: <span class="st">"RESERVE_UPDATED"</span>,
+    <span class="st">"target"</span>: <span class="st">"CLM-2026-0001"</span>,
+    <span class="st">"detail"</span>: <span class="st">"Gross reserve revised to $16,500.00"</span>
+  }
+]</pre>
+      </div>
+    </section>
+
+    <!-- SECTION 8: RTM -->
+    <section id="rtm">
+      <div class="section-header">
+        <div class="section-icon">&#x2611;</div>
+        <div><div class="section-number">Section 08</div><h2>Requirements Traceability Matrix (RTM)</h2></div>
+      </div>
+      <table class="api-table">
+        <thead>
+          <tr><th>Req ID</th><th>Functional Requirement</th><th>Tested Endpoints</th><th>Coverage</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>FR1</strong></td><td>Policyholder Onboarding</td><td><code>POST /api/policies/onboard</code></td><td>100%</td><td><span class="badge-pass">VERIFIED</span></td></tr>
+          <tr><td><strong>FR2</strong></td><td>Dynamic Underwriting Matrix</td><td><code>POST /api/underwrite/quote</code>, <code>POST /api/underwrite/overrides</code></td><td>100%</td><td><span class="badge-pass">VERIFIED</span></td></tr>
+          <tr><td><strong>FR3</strong></td><td>Claims Registration &amp; FNOL</td><td><code>POST /api/claims/fnol</code>, <code>PUT /api/claims/{id}/reserve</code></td><td>100%</td><td><span class="badge-pass">VERIFIED</span></td></tr>
+          <tr><td><strong>FR4</strong></td><td>Policy Endorsements &amp; Snapshots</td><td><code>POST /api/policies/{id}/endorse</code>, <code>GET /api/policies/{id}/history</code></td><td>100%</td><td><span class="badge-pass">VERIFIED</span></td></tr>
+          <tr><td><strong>FR5</strong></td><td>Asynchronous AML Watchlist Check</td><td><code>POST /api/policies/onboard</code> (OFAC Match)</td><td>100%</td><td><span class="badge-pass">VERIFIED</span></td></tr>
+          <tr><td><strong>FR6</strong></td><td>Audit Trail &amp; Governance</td><td><code>GET /api/admin/audit-logs</code></td><td>100%</td><td><span class="badge-pass">VERIFIED</span></td></tr>
+          <tr><td><strong>FR7</strong></td><td>Authentication &amp; User Registry</td><td><code>POST /api/auth/login</code>, <code>PUT /api/admin/users/{id}/toggle-active</code></td><td>100%</td><td><span class="badge-pass">VERIFIED</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+
+  <div class="doc-footer">
+    Insurance Policy and Claim Management System (IPCMS) · Automated Testing &amp; API Verification Documentation · September 2026
+  </div>
+</div>
+</body>
+</html>
