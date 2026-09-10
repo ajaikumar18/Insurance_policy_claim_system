@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Insurance Policy Claim System – Project Documentation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand-primary: #1a3a5c;
+      --brand-accent:  #0f6fb4;
+      --brand-light:   #e8f4fd;
+      --brand-gradient: linear-gradient(135deg, #1a3a5c 0%, #0f6fb4 100%);
+      --section-bg:   #f0f6fc;
+      --code-bg:      #0d1117;
+      --code-text:    #e6edf3;
+      --border:       #d0e4f5;
+      --text-primary: #0d1b2a;
+      --text-secondary: #4a6785;
+    }
+    body { background:#e2ecf6; color:var(--text-primary); font-size:13.5px; line-height:1.7; font-family:'Inter',sans-serif; }
+    @media print {
+      body { background:white; font-size:11px; }
+      .no-print { display:none !important; }
+      .page-break { page-break-before:always; }
+      .avoid-break { page-break-inside:avoid; }
+      .cover { page-break-after:always; }
+    }
+    .doc-wrapper { max-width:1100px; margin:30px auto; background:#fff; border-radius:12px; box-shadow:0 8px 40px rgba(15,111,180,.18); overflow:hidden; }
+    .cover { background:var(--brand-gradient); color:white; padding:80px 60px 60px; min-height:380px; position:relative; overflow:hidden; }
+    .cover::before { content:''; position:absolute; inset:0; background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E"); }
+    .cover h1 { font-size:34px; font-weight:700; line-height:1.25; margin-bottom:12px; }
+    .cover .subtitle { font-size:16px; opacity:.85; margin-bottom:40px; }
+    .cover-meta { display:flex; gap:40px; flex-wrap:wrap; }
+    .cover-meta-item label { display:block; font-size:10px; text-transform:uppercase; letter-spacing:1.2px; opacity:.65; margin-bottom:4px; }
+    .cover-meta-item span { font-size:13px; font-weight:600; }
+    .cover-logo { font-size:42px; margin-bottom:24px; }
+    .toc { background:var(--section-bg); padding:40px 60px; border-bottom:1px solid var(--border); }
+    .toc h2 { font-size:13px; text-transform:uppercase; letter-spacing:1.5px; color:var(--brand-accent); margin-bottom:20px; font-weight:600; }
+    .toc ol { list-style:none; counter-reset:toc; display:grid; grid-template-columns:1fr 1fr; gap:8px 40px; }
+    .toc li { counter-increment:toc; display:flex; align-items:center; gap:10px; }
+    .toc li::before { content:counter(toc, decimal-leading-zero); font-size:11px; font-weight:700; color:var(--brand-accent); min-width:26px; }
+    .toc a { color:var(--text-primary); text-decoration:none; font-weight:500; font-size:13px; border-bottom:1px dashed var(--border); }
+    .content { padding:50px 60px; }
+    .section-header { display:flex; align-items:center; gap:14px; margin-bottom:28px; padding-bottom:14px; border-bottom:2px solid var(--brand-light); }
+    .section-header .section-icon { width:40px; height:40px; border-radius:10px; background:var(--brand-gradient); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .section-header h2 { font-size:22px; font-weight:700; color:var(--brand-primary); }
+    .section-number { font-size:11px; font-weight:700; color:var(--brand-accent); text-transform:uppercase; letter-spacing:1px; }
+    section { margin-bottom:60px; }
+    h3 { font-size:16px; font-weight:600; color:var(--brand-primary); margin:28px 0 12px; }
+    p { margin-bottom:10px; color:var(--text-secondary); }
+    .file-tree { background:var(--code-bg); border-radius:10px; padding:24px 28px; overflow-x:auto; font-family:'Fira Code',monospace; font-size:12.5px; line-height:1.9; color:#e6edf3; border:1px solid #30363d; }
+    .tree-root { color:#ffa657; font-weight:600; }
+    .tree-dir  { color:#79c0ff; }
+    .tree-file { color:#e6edf3; }
+    .tree-pipe { color:#8b949e; }
+    .tree-badge { display:inline-block; font-size:9px; padding:1px 6px; border-radius:4px; margin-left:8px; font-family:'Inter',sans-serif; font-weight:600; vertical-align:middle; text-transform:uppercase; }
+    .badge-ctrl { background:#1d3a6e; color:#93c5fd; }
+    .badge-svc  { background:#14532d; color:#86efac; }
+    .badge-repo { background:#422006; color:#fcd34d; }
+    .badge-dto  { background:#2d1b69; color:#c4b5fd; }
+    .badge-ent  { background:#3b0764; color:#e879f9; }
+    .badge-sec  { background:#450a0a; color:#fca5a5; }
+    .badge-cfg  { background:#1c1917; color:#a8a29e; }
+    .code-file { margin:24px 0; border-radius:10px; overflow:hidden; border:1px solid #30363d; }
+    .code-file-header { background:#161b22; padding:10px 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #30363d; }
+    .code-file-dots { display:flex; gap:6px; }
+    .code-file-dots span { width:12px; height:12px; border-radius:50%; }
+    .dot-red    { background:#ff5f57; }
+    .dot-yellow { background:#febc2e; }
+    .dot-green  { background:#28c840; }
+    .code-file-name { font-family:'Fira Code',monospace; font-size:12px; color:#8b949e; margin-left:6px; }
+    .code-badge { margin-left:auto; font-size:10px; padding:2px 8px; border-radius:4px; font-family:'Inter',sans-serif; font-weight:600; text-transform:uppercase; }
+    .cb-controller { background:#1d3a6e; color:#93c5fd; }
+    .cb-service    { background:#14532d; color:#86efac; }
+    .cb-repo       { background:#422006; color:#fcd34d; }
+    .cb-interface  { background:#2d1b69; color:#c4b5fd; }
+    .cb-impl       { background:#134e4a; color:#5eead4; }
+    pre { background:var(--code-bg); color:#e6edf3; padding:20px; overflow-x:auto; font-family:'Fira Code',monospace; font-size:12px; line-height:1.75; margin:0; }
+    .kw { color:#ff7b72; }
+    .st { color:#a5d6ff; }
+    .an { color:#79c0ff; }
+    .cm { color:#8b949e; font-style:italic; }
+    .cn { color:#ffa657; }
+    .nm { color:#79c0ff; }
+    .api-table { width:100%; border-collapse:collapse; font-size:12.5px; margin:16px 0 30px; }
+    .api-table thead tr { background:var(--brand-gradient); color:white; }
+    .api-table thead th { padding:11px 14px; text-align:left; font-weight:600; font-size:11.5px; }
+    .api-table tbody tr { border-bottom:1px solid var(--border); }
+    .api-table tbody tr:nth-child(even) { background:#f8fbff; }
+    .api-table td { padding:10px 14px; vertical-align:top; }
+    .method { display:inline-block; padding:3px 10px; border-radius:5px; font-weight:700; font-size:10.5px; font-family:'Fira Code',monospace; min-width:52px; text-align:center; }
+    .m-get    { background:#dcfce7; color:#15803d; }
+    .m-post   { background:#dbeafe; color:#1d4ed8; }
+    .m-put    { background:#fef3c7; color:#b45309; }
+    .m-delete { background:#fee2e2; color:#b91c1c; }
+    .endpoint-url { font-family:'Fira Code',monospace; font-size:12px; }
+    .role-badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:10px; font-weight:600; margin:2px 2px 2px 0; }
+    .role-admin { background:#fee2e2; color:#991b1b; }
+    .role-uw    { background:#fef3c7; color:#92400e; }
+    .role-agent { background:#dbeafe; color:#1e40af; }
+    .role-ph    { background:#dcfce7; color:#166534; }
+    .role-ch    { background:#f3e8ff; color:#6b21a8; }
+    .role-all   { background:#e0e7ff; color:#3730a3; }
+    .info-box { border-left:4px solid var(--brand-accent); background:var(--brand-light); padding:14px 18px; border-radius:0 8px 8px 0; margin:16px 0; font-size:13px; }
+    .info-box strong { color:var(--brand-accent); }
+    .note-box { border-left:4px solid #f59e0b; background:#fffbeb; padding:14px 18px; border-radius:0 8px 8px 0; margin:16px 0; font-size:13px; }
+    .note-box strong { color:#b45309; }
+    .card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:18px; margin:20px 0; }
+    .repo-card { border:1px solid var(--border); border-radius:10px; padding:18px 20px; background:#fafcff; }
+    .repo-card-title { font-family:'Fira Code',monospace; font-size:13px; font-weight:600; color:var(--brand-primary); margin-bottom:6px; }
+    .repo-card-ext { font-size:11px; color:var(--text-secondary); margin-bottom:8px; }
+    .repo-card-methods { display:flex; flex-wrap:wrap; gap:6px; }
+    .repo-method { font-family:'Fira Code',monospace; font-size:10.5px; padding:2px 8px; border-radius:4px; background:var(--code-bg); color:#79c0ff; }
+    .postman-endpoint { background:white; border:1px solid var(--border); border-radius:10px; margin-bottom:20px; overflow:hidden; }
+    .postman-endpoint-header { background:var(--section-bg); padding:12px 18px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border); }
+    .postman-endpoint-title { font-weight:600; font-size:13.5px; color:var(--brand-primary); }
+    .postman-endpoint-desc { font-size:12px; color:var(--text-secondary); margin-left:auto; }
+    .postman-section-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text-secondary); padding:10px 18px 4px; background:#fbfcff; border-bottom:1px solid var(--border); }
+    .doc-footer { background:var(--brand-gradient); color:white; text-align:center; padding:28px; font-size:12px; }
+    .print-btn { position:fixed; bottom:30px; right:30px; background:var(--brand-gradient); color:white; border:none; padding:14px 24px; border-radius:50px; font-family:'Inter',sans-serif; font-size:14px; font-weight:600; cursor:pointer; box-shadow:0 4px 20px rgba(15,111,180,.4); z-index:999; }
+    hr.section-divider { border:none; border-top:1px solid var(--border); margin:40px 0; }
+  </style>
+</head>
+<body>
+<button class="print-btn no-print" onclick="window.print()">Print / Save as PDF</button>
+<div class="doc-wrapper">
+
+  <!-- COVER -->
+  <div class="cover">
+    <div class="cover-logo">Shield</div>
+    <h1>Insurance Policy &amp; Claim<br>Management System</h1>
+    <p class="subtitle">Technical Project Documentation: Controllers, Services, JPA Repositories &amp; API Reference</p>
+    <div class="cover-meta">
+      <div class="cover-meta-item"><label>Project</label><span>IPCMS</span></div>
+      <div class="cover-meta-item"><label>Backend</label><span>Spring Boot 3 · Java 21 · PostgreSQL</span></div>
+      <div class="cover-meta-item"><label>Frontend</label><span>React · TypeScript · Vite</span></div>
+      <div class="cover-meta-item"><label>Generated</label><span>August 2026</span></div>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#section-structure">Project File Structure</a></li>
+      <li><a href="#section-controllers">Controllers</a></li>
+      <li><a href="#section-services">Service Interfaces</a></li>
+      <li><a href="#section-service-impl">Service Implementations</a></li>
+      <li><a href="#section-jpa">JPA Repositories</a></li>
+      <li><a href="#section-api">API Endpoint Reference</a></li>
+    </ol>
+  </div>
+
+  <div class="content">
+
+    <!-- SECTION 1: FILE STRUCTURE -->
+    <section id="section-structure">
+      <div class="section-header">
+        <div class="section-icon">F</div>
+        <div><div class="section-number">Section 01</div><h2>Project File Structure</h2></div>
+      </div>
+      <div class="info-box"><strong>Root:</strong> <code>Insurance-policy-claim-system/</code> - Full-stack monorepo with Spring Boot backend, React/TypeScript frontend, Docker and PostgreSQL scripts.</div>
+
+      <h3>Root Directory</h3>
+      <div class="file-tree">
+<span class="tree-root">Insurance-policy-claim-system/</span><br>
+<span class="tree-pipe">|-- </span><span class="tree-dir">backend/</span>          <span class="tree-pipe"># Spring Boot 3 API server (Java 21)</span><br>
+<span class="tree-pipe">|-- </span><span class="tree-dir">frontend/</span>         <span class="tree-pipe"># React + TypeScript + Vite UI</span><br>
+<span class="tree-pipe">|-- </span><span class="tree-dir">database/</span>         <span class="tree-pipe"># SQL schema &amp; seed scripts</span><br>
+<span class="tree-pipe">|-- </span><span class="tree-dir">docker/</span>           <span class="tree-pipe"># docker-compose.yml</span><br>
+<span class="tree-pipe">|-- </span><span class="tree-dir">docs/</span>             <span class="tree-pipe"># Documentation files</span><br>
+<span class="tree-pipe">|-- </span><span class="tree-dir">postman/</span>          <span class="tree-pipe"># Postman collection</span><br>
+<span class="tree-pipe">|-- </span><span class="tree-file">README.md</span><br>
+<span class="tree-pipe">+-- </span><span class="tree-file">manual_test_guide.md</span>
+      </div>
+
+      <h3>Backend - Java Package Tree</h3>
+      <div class="file-tree">
+<span class="tree-root">backend/src/main/java/com/insurance/backend/</span><br>
+<span class="tree-pipe">|   BackendApplication.java</span>   <span class="tree-pipe"># Spring Boot entry point</span><br>
+<span class="tree-pipe">|</span><br>
+<span class="tree-pipe">+-- </span><span class="tree-dir">controller/</span>       <span class="tree-badge badge-ctrl">@RestController</span><br>
+<span class="tree-pipe">|   |-- AuditLogController.java</span><br>
+<span class="tree-pipe">|   |-- AuthController.java</span><br>
+<span class="tree-pipe">|   |-- ClaimController.java</span><br>
+<span class="tree-pipe">|   |-- PolicyController.java</span><br>
+<span class="tree-pipe">|   +-- UnderwriteController.java</span><br>
+<span class="tree-pipe">|</span><br>
+<span class="tree-pipe">+-- </span><span class="tree-dir">service/</span>          <span class="tree-badge badge-svc">@Service</span><br>
+<span class="tree-pipe">|   |-- AmlService.java           </span><span class="tree-pipe"># AML check (Async)</span><br>
+<span class="tree-pipe">|   |-- AuditLogService.java      </span><span class="tree-pipe"># Interface</span><br>
+<span class="tree-pipe">|   |-- AuditLogServiceImpl.java</span><br>
+<span class="tree-pipe">|   |-- ClaimService.java         </span><span class="tree-pipe"># Interface</span><br>
+<span class="tree-pipe">|   |-- ClaimServiceImpl.java</span><br>
+<span class="tree-pipe">|   |-- PolicyService.java        </span><span class="tree-pipe"># Interface</span><br>
+<span class="tree-pipe">|   |-- PolicyServiceImpl.java</span><br>
+<span class="tree-pipe">|   |-- UnderwriteService.java    </span><span class="tree-pipe"># Interface</span><br>
+<span class="tree-pipe">|   |-- UnderwriteServiceImpl.java</span><br>
+<span class="tree-pipe">|   |-- UserService.java          </span><span class="tree-pipe"># Interface</span><br>
+<span class="tree-pipe">|   +-- UserServiceImpl.java</span><br>
+<span class="tree-pipe">|</span><br>
+<span class="tree-pipe">+-- </span><span class="tree-dir">repository/</span>       <span class="tree-badge badge-repo">JpaRepository</span><br>
+<span class="tree-pipe">|   |-- AuditLogRepository.java</span><br>
+<span class="tree-pipe">|   |-- ClaimRepository.java</span><br>
+<span class="tree-pipe">|   |-- PolicyHistoryRepository.java</span><br>
+<span class="tree-pipe">|   |-- PolicyRepository.java</span><br>
+<span class="tree-pipe">|   |-- UnderwriteOverrideRepository.java</span><br>
+<span class="tree-pipe">|   +-- UserRepository.java</span><br>
+<span class="tree-pipe">|</span><br>
+<span class="tree-pipe">+-- </span><span class="tree-dir">entity/</span>           <span class="tree-badge badge-ent">@Entity</span><br>
+<span class="tree-pipe">|   |-- AuditLog.java</span><br>
+<span class="tree-pipe">|   |-- Claim.java</span><br>
+<span class="tree-pipe">|   |-- Policy.java</span><br>
+<span class="tree-pipe">|   |-- PolicyHistory.java</span><br>
+<span class="tree-pipe">|   |-- Role.java   </span><span class="tree-pipe"># Enum: ADMIN,UNDERWRITER,AGENT,CLAIMS_HANDLER,POLICYHOLDER</span><br>
+<span class="tree-pipe">|   |-- UnderwriteOverride.java</span><br>
+<span class="tree-pipe">|   +-- User.java</span><br>
+<span class="tree-pipe">|</span><br>
+<span class="tree-pipe">+-- </span><span class="tree-dir">dto/</span>              <span class="tree-badge badge-dto">Request/Response DTOs</span><br>
+<span class="tree-pipe">|   AuthResponse | LoginRequest | OnboardRequest | OnboardResponse</span><br>
+<span class="tree-pipe">|   ClaimDto | FnolRequest | ReserveUpdateRequest</span><br>
+<span class="tree-pipe">|   PolicyDto | PolicyCreateRequest | PolicyHistoryDto</span><br>
+<span class="tree-pipe">|   EndorsementRequest | EndorsementResponse</span><br>
+<span class="tree-pipe">|   QuoteRequest | QuoteResponse | OverrideRequest | OverrideResponse</span><br>
+<span class="tree-pipe">|   AuditLogDto | UserCreateRequest</span><br>
+<span class="tree-pipe">|</span><br>
+<span class="tree-pipe">+-- </span><span class="tree-dir">security/</span>         <span class="tree-badge badge-sec">JWT / Spring Security</span><br>
+<span class="tree-pipe">|   CustomUserDetailsService | JwtAuthenticationFilter</span><br>
+<span class="tree-pipe">|   JwtTokenProvider | SecurityConfig</span><br>
+<span class="tree-pipe">|</span><br>
+<span class="tree-pipe">+-- </span><span class="tree-dir">exception/</span><br>
+<span class="tree-pipe">|   AmlCheckFailedException | EmailAlreadyExistsException | GlobalExceptionHandler</span><br>
+<span class="tree-pipe">|</span><br>
+<span class="tree-pipe">+-- </span><span class="tree-dir">util/</span><br>
+<span class="tree-pipe">    +-- DatabaseSeeder.java</span>
+      </div>
+
+      <h3>Frontend - Source Tree</h3>
+      <div class="file-tree">
+<span class="tree-root">frontend/src/</span><br>
+<span class="tree-pipe">|   main.tsx          </span><span class="tree-pipe"># React entry point</span><br>
+<span class="tree-pipe">|</span><br>
+<span class="tree-pipe">+-- </span><span class="tree-dir">app/</span><br>
+<span class="tree-pipe">|   |-- App.tsx       </span><span class="tree-pipe"># Main application shell (routing, views)</span><br>
+<span class="tree-pipe">|   |-- </span><span class="tree-dir">components/</span><br>
+<span class="tree-pipe">|   |   |-- </span><span class="tree-dir">figma/</span>    <span class="tree-pipe"># ImageWithFallback.tsx</span><br>
+<span class="tree-pipe">|   |   +-- </span><span class="tree-dir">ui/</span>       <span class="tree-pipe"># Shadcn UI library (40+ components)</span><br>
+<span class="tree-pipe">|   +-- </span><span class="tree-dir">services/</span>     <span class="tree-badge badge-cfg">HTTP Clients</span><br>
+<span class="tree-pipe">|       |-- AdminService.js</span><br>
+<span class="tree-pipe">|       |-- AuthService.js</span><br>
+<span class="tree-pipe">|       |-- ClaimService.js</span><br>
+<span class="tree-pipe">|       |-- PaymentService.js</span><br>
+<span class="tree-pipe">|       |-- PolicyService.js</span><br>
+<span class="tree-pipe">|       |-- UnderwritingService.js</span><br>
+<span class="tree-pipe">|       +-- UserService.js</span><br>
+<span class="tree-pipe">|</span><br>
+<span class="tree-pipe">+-- </span><span class="tree-dir">styles/</span><br>
+<span class="tree-pipe">    globals.css | index.css | theme.css | fonts.css | tailwind.css</span>
+      </div>
+
+      <h3>Database and Infrastructure</h3>
+      <div class="file-tree">
+<span class="tree-root">database/</span><br>
+<span class="tree-pipe">|-- schema.sql     </span><span class="tree-pipe"># Tables: users, policies, claims, audit_logs...</span><br>
+<span class="tree-pipe">+-- data.sql       </span><span class="tree-pipe"># Seed data (default admin and roles)</span><br>
+<br>
+<span class="tree-root">docker/</span><br>
+<span class="tree-pipe">+-- docker-compose.yml   </span><span class="tree-pipe"># PostgreSQL + Spring Boot containers</span>
+      </div>
+    </section>
+
+    <hr class="section-divider page-break">
+
+    <!-- SECTION 2: CONTROLLERS -->
+    <section id="section-controllers">
+      <div class="section-header">
+        <div class="section-icon">C</div>
+        <div><div class="section-number">Section 02</div><h2>Controllers</h2></div>
+      </div>
+      <div class="info-box">Controllers handle HTTP requests, enforce authentication with Spring Security annotations, and delegate business logic to the Service layer.</div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">controller / AuthController.java</span>
+          <span class="code-badge cb-controller">Controller</span>
+        </div>
+        <pre>
+<span class="an">@RestController</span>
+<span class="an">@RequestMapping</span>(<span class="st">"/api/auth"</span>)
+<span class="kw">public class</span> <span class="cn">AuthController</span> {
+
+    <span class="kw">private final</span> <span class="cn">UserService</span> userService;
+
+    <span class="kw">public</span> <span class="cn">AuthController</span>(<span class="cn">UserService</span> userService) {
+        <span class="kw">this</span>.userService = userService;
+    }
+
+    <span class="an">@PostMapping</span>(<span class="st">"/login"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">AuthResponse</span>&gt; login(
+            <span class="an">@Valid @RequestBody</span> <span class="cn">LoginRequest</span> request) {
+        <span class="cn">AuthResponse</span> response = userService.login(request);
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(response);
+    }
+
+    <span class="an">@PostMapping</span>(<span class="st">"/logout"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">Map</span>&lt;<span class="cn">String</span>, <span class="cn">String</span>&gt;&gt; logout() {
+        <span class="cn">SecurityContextHolder</span>.clearContext();
+        <span class="cn">Map</span>&lt;<span class="cn">String</span>, <span class="cn">String</span>&gt; response = <span class="kw">new</span> <span class="cn">HashMap</span>&lt;&gt;();
+        response.put(<span class="st">"message"</span>, <span class="st">"Logged out successfully"</span>);
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(response);
+    }
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">controller / PolicyController.java</span>
+          <span class="code-badge cb-controller">Controller</span>
+        </div>
+        <pre>
+<span class="an">@RestController</span>
+<span class="an">@RequestMapping</span>(<span class="st">"/api"</span>)
+<span class="kw">public class</span> <span class="cn">PolicyController</span> {
+
+    <span class="kw">private final</span> <span class="cn">UserService</span> userService;
+    <span class="kw">private final</span> <span class="cn">PolicyService</span> policyService;
+
+    <span class="cm">/** POST /api/policy/onboard -- Onboard a new policyholder */</span>
+    <span class="an">@PostMapping</span>(<span class="st">"/policy/onboard"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">OnboardResponse</span>&gt; onboardPolicyholder(
+            <span class="an">@Valid @RequestBody</span> <span class="cn">OnboardRequest</span> request) {
+        <span class="cn">OnboardResponse</span> response = userService.onboardPolicyholder(request);
+        <span class="kw">return new</span> <span class="cn">ResponseEntity</span>&lt;&gt;(response, <span class="cn">HttpStatus</span>.CREATED);
+    }
+
+    <span class="cm">/** GET /api/policy/all -- Get all policies (scope-filtered) */</span>
+    <span class="an">@GetMapping</span>(<span class="st">"/policy/all"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">List</span>&lt;<span class="cn">PolicyDto</span>&gt;&gt; getAllPoliciesByScope() {
+        <span class="cn">List</span>&lt;<span class="cn">PolicyDto</span>&gt; policies = policyService.getPoliciesByScope()
+                .stream().map(<span class="kw">this</span>::mapToDto).collect(<span class="cn">Collectors</span>.toList());
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(policies);
+    }
+
+    <span class="cm">/** GET /api/policies -- Alias for /policy/all */</span>
+    <span class="an">@GetMapping</span>(<span class="st">"/policies"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">List</span>&lt;<span class="cn">PolicyDto</span>&gt;&gt; getPolicies() { ... }
+
+    <span class="cm">/** POST /api/policies/{id}/endorse -- Mid-term endorsement */</span>
+    <span class="an">@PostMapping</span>(<span class="st">"/policies/{id}/endorse"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">EndorsementResponse</span>&gt; endorsePolicy(
+            <span class="an">@PathVariable</span> <span class="cn">Long</span> id,
+            <span class="an">@Valid @RequestBody</span> <span class="cn">EndorsementRequest</span> request) {
+        <span class="cn">EndorsementResponse</span> response = policyService.endorsePolicy(id, request);
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(response);
+    }
+
+    <span class="cm">/** GET /api/policies/{id}/history -- Endorsement audit trail */</span>
+    <span class="an">@GetMapping</span>(<span class="st">"/policies/{id}/history"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">List</span>&lt;<span class="cn">PolicyHistoryDto</span>&gt;&gt; getPolicyHistory(
+            <span class="an">@PathVariable</span> <span class="cn">Long</span> id) {
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(policyService.getPolicyHistory(id));
+    }
+
+    <span class="cm">/** POST /api/policies -- Create a new policy */</span>
+    <span class="an">@PostMapping</span>(<span class="st">"/policies"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">PolicyDto</span>&gt; createPolicy(
+            <span class="an">@Valid @RequestBody</span> <span class="cn">PolicyCreateRequest</span> request) {
+        <span class="cn">Policy</span> created = policyService.createPolicy(request);
+        <span class="kw">return new</span> <span class="cn">ResponseEntity</span>&lt;&gt;(mapToDto(created), <span class="cn">HttpStatus</span>.CREATED);
+    }
+
+    <span class="cm">/** POST /api/policies/{id}/renew -- Extend expiry by 1 year */</span>
+    <span class="an">@PostMapping</span>(<span class="st">"/policies/{id}/renew"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">PolicyDto</span>&gt; renewPolicy(
+            <span class="an">@PathVariable</span> <span class="cn">Long</span> id) {
+        <span class="cn">Policy</span> renewed = policyService.renewPolicy(id);
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(mapToDto(renewed));
+    }
+
+    <span class="kw">private</span> <span class="cn">PolicyDto</span> mapToDto(<span class="cn">Policy</span> policy) {
+        <span class="kw">return</span> <span class="cn">PolicyDto</span>.builder()
+                .id(policy.getId())
+                .policyNumber(policy.getPolicyNumber())
+                .policyholderId(policy.getPolicyholder().getId())
+                .policyholderName(policy.getPolicyholder().getLegalName())
+                .productType(policy.getProductType())
+                .basePremium(policy.getBasePremium())
+                .activeReserve(policy.getActiveReserve())
+                .expiryDate(policy.getExpiryDate().toString())
+                .status(policy.getStatus())
+                .build();
+    }
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">controller / ClaimController.java</span>
+          <span class="code-badge cb-controller">Controller</span>
+        </div>
+        <pre>
+<span class="an">@RestController</span>
+<span class="an">@RequestMapping</span>(<span class="st">"/api/claims"</span>)
+<span class="kw">public class</span> <span class="cn">ClaimController</span> {
+
+    <span class="kw">private final</span> <span class="cn">ClaimService</span> claimService;
+
+    <span class="cm">/** POST /api/claims/fnol -- Register First Notice of Loss */</span>
+    <span class="an">@PostMapping</span>(<span class="st">"/fnol"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">ClaimDto</span>&gt; registerFnol(
+            <span class="an">@Valid @RequestBody</span> <span class="cn">FnolRequest</span> request) {
+        <span class="cn">ClaimDto</span> response = claimService.registerFnol(request);
+        <span class="kw">return new</span> <span class="cn">ResponseEntity</span>&lt;&gt;(response, <span class="cn">HttpStatus</span>.CREATED);
+    }
+
+    <span class="cm">/** GET /api/claims -- Get claims (scope-filtered by role) */</span>
+    <span class="an">@GetMapping</span>
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">List</span>&lt;<span class="cn">ClaimDto</span>&gt;&gt; getClaimsByScope() {
+        <span class="cn">List</span>&lt;<span class="cn">ClaimDto</span>&gt; response = claimService.getClaimsByScope();
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(response);
+    }
+
+    <span class="cm">/** PUT /api/claims/reserve/{id} -- Update gross reserve amount */</span>
+    <span class="an">@PutMapping</span>(<span class="st">"/reserve/{id}"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">ClaimDto</span>&gt; updateReserve(
+            <span class="an">@PathVariable</span> <span class="cn">Long</span> id,
+            <span class="an">@Valid @RequestBody</span> <span class="cn">ReserveUpdateRequest</span> request) {
+        <span class="cn">ClaimDto</span> response = claimService.updateReserve(id, request);
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(response);
+    }
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">controller / UnderwriteController.java</span>
+          <span class="code-badge cb-controller">Controller</span>
+        </div>
+        <pre>
+<span class="an">@RestController</span>
+<span class="an">@RequestMapping</span>(<span class="st">"/api/underwrite"</span>)
+<span class="kw">public class</span> <span class="cn">UnderwriteController</span> {
+
+    <span class="kw">private final</span> <span class="cn">UnderwriteService</span> underwriteService;
+
+    <span class="cm">/** POST /api/underwrite/quote -- Calculate risk-based premium quote */</span>
+    <span class="an">@PostMapping</span>(<span class="st">"/quote"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">QuoteResponse</span>&gt; calculateQuote(
+            <span class="an">@Valid @RequestBody</span> <span class="cn">QuoteRequest</span> request) {
+        <span class="cn">QuoteResponse</span> response = underwriteService.calculatePremiumQuote(request);
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(response);
+    }
+
+    <span class="cm">/** POST /api/underwrite/override -- Submit premium override request */</span>
+    <span class="an">@PostMapping</span>(<span class="st">"/override"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">OverrideResponse</span>&gt; submitOverride(
+            <span class="an">@Valid @RequestBody</span> <span class="cn">OverrideRequest</span> request) { ... }
+
+    <span class="cm">/** GET /api/underwrite/overrides -- List all override requests */</span>
+    <span class="an">@GetMapping</span>(<span class="st">"/overrides"</span>)
+    <span class="an">@PreAuthorize</span>(<span class="st">"hasAnyRole('UNDERWRITER', 'ADMIN')"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">List</span>&lt;<span class="cn">OverrideResponse</span>&gt;&gt; getAllOverrides() { ... }
+
+    <span class="cm">/** PUT /api/underwrite/override/{id}/approve -- Approve override */</span>
+    <span class="an">@PutMapping</span>(<span class="st">"/override/{id}/approve"</span>)
+    <span class="an">@PreAuthorize</span>(<span class="st">"hasAnyRole('UNDERWRITER', 'ADMIN')"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">OverrideResponse</span>&gt; approveOverride(
+            <span class="an">@PathVariable</span> <span class="cn">Long</span> id) { ... }
+
+    <span class="cm">/** PUT /api/underwrite/override/{id}/reject -- Reject override */</span>
+    <span class="an">@PutMapping</span>(<span class="st">"/override/{id}/reject"</span>)
+    <span class="an">@PreAuthorize</span>(<span class="st">"hasAnyRole('UNDERWRITER', 'ADMIN')"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">OverrideResponse</span>&gt; rejectOverride(
+            <span class="an">@PathVariable</span> <span class="cn">Long</span> id) { ... }
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">controller / AuditLogController.java</span>
+          <span class="code-badge cb-controller">Controller</span>
+        </div>
+        <pre>
+<span class="an">@RestController</span>
+<span class="an">@RequestMapping</span>(<span class="st">"/api/admin"</span>)
+<span class="an">@PreAuthorize</span>(<span class="st">"hasRole('ADMIN')"</span>)   <span class="cm">// All endpoints restricted to ADMIN</span>
+<span class="kw">public class</span> <span class="cn">AuditLogController</span> {
+
+    <span class="kw">private final</span> <span class="cn">AuditLogService</span> auditLogService;
+    <span class="kw">private final</span> <span class="cn">UserService</span> userService;
+
+    <span class="cm">/** GET /api/admin/audit-logs -- Retrieve all audit log entries */</span>
+    <span class="an">@GetMapping</span>(<span class="st">"/audit-logs"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">List</span>&lt;<span class="cn">AuditLogDto</span>&gt;&gt; getAllAuditLogs() {
+        <span class="cn">DateTimeFormatter</span> formatter =
+            <span class="cn">DateTimeFormatter</span>.ofPattern(<span class="st">"yyyy-MM-dd HH:mm:ss"</span>);
+        <span class="cn">List</span>&lt;<span class="cn">AuditLogDto</span>&gt; logs = auditLogService.getAllLogs().stream()
+                .map(l -&gt; <span class="cn">AuditLogDto</span>.builder()
+                        .id(l.getId())
+                        .timestamp(l.getTimestamp().format(formatter))
+                        .userEmail(l.getUserEmail())
+                        .action(l.getAction())
+                        .target(l.getTarget())
+                        .detail(l.getDetail())
+                        .build())
+                .collect(<span class="cn">Collectors</span>.toList());
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(logs);
+    }
+
+    <span class="cm">/** POST /api/admin/users -- Admin creates a new system user */</span>
+    <span class="an">@PostMapping</span>(<span class="st">"/users"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">User</span>&gt; createUser(
+            <span class="an">@Valid @RequestBody</span> <span class="cn">UserCreateRequest</span> request) {
+        <span class="cn">User</span> created = userService.createUser(request);
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(created);
+    }
+
+    <span class="cm">/** GET /api/admin/users -- List all system users */</span>
+    <span class="an">@GetMapping</span>(<span class="st">"/users"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">List</span>&lt;<span class="cn">User</span>&gt;&gt; getAllUsers() {
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(userService.getAllUsers());
+    }
+
+    <span class="cm">/** PUT /api/admin/users/{id}/toggle-active -- Enable/disable user */</span>
+    <span class="an">@PutMapping</span>(<span class="st">"/users/{id}/toggle-active"</span>)
+    <span class="kw">public</span> <span class="cn">ResponseEntity</span>&lt;<span class="cn">User</span>&gt; toggleUserActive(
+            <span class="an">@PathVariable</span> <span class="cn">Long</span> id) {
+        <span class="cn">User</span> updated = userService.toggleUserActive(id);
+        <span class="kw">return</span> <span class="cn">ResponseEntity</span>.ok(updated);
+    }
+}</pre>
+      </div>
+    </section>
+
+    <hr class="section-divider page-break">
+
+    <!-- SECTION 3: SERVICE INTERFACES -->
+    <section id="section-services">
+      <div class="section-header">
+        <div class="section-icon">I</div>
+        <div><div class="section-number">Section 03</div><h2>Service Interfaces</h2></div>
+      </div>
+      <div class="info-box">All services follow the <strong>Interface to Implementation</strong> pattern for loose coupling. Spring injects the @Service implementation automatically via constructor injection.</div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">service / UserService.java</span>
+          <span class="code-badge cb-interface">Interface</span>
+        </div>
+        <pre>
+<span class="kw">public interface</span> <span class="cn">UserService</span> {
+    <span class="cn">AuthResponse</span>    login(<span class="cn">LoginRequest</span> request);
+    <span class="cn">OnboardResponse</span> onboardPolicyholder(<span class="cn">OnboardRequest</span> request);
+    <span class="cn">List</span>&lt;<span class="cn">User</span>&gt;       getAllUsers();
+    <span class="cn">User</span>            getUserById(<span class="cn">Long</span> id);
+    <span class="cn">User</span>            createUser(<span class="cn">UserCreateRequest</span> request);
+    <span class="cn">User</span>            toggleUserActive(<span class="cn">Long</span> id);
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">service / PolicyService.java</span>
+          <span class="code-badge cb-interface">Interface</span>
+        </div>
+        <pre>
+<span class="kw">public interface</span> <span class="cn">PolicyService</span> {
+    <span class="cn">List</span>&lt;<span class="cn">Policy</span>&gt;           getPoliciesByScope();
+    <span class="cn">Policy</span>                 getPolicyById(<span class="cn">Long</span> id);
+    <span class="cn">EndorsementResponse</span>    endorsePolicy(<span class="cn">Long</span> id, <span class="cn">EndorsementRequest</span> request);
+    <span class="cn">List</span>&lt;<span class="cn">PolicyHistoryDto</span>&gt; getPolicyHistory(<span class="cn">Long</span> id);
+    <span class="cn">Policy</span>                 createPolicy(<span class="cn">PolicyCreateRequest</span> request);
+    <span class="cn">Policy</span>                 renewPolicy(<span class="cn">Long</span> id);
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">service / ClaimService.java</span>
+          <span class="code-badge cb-interface">Interface</span>
+        </div>
+        <pre>
+<span class="kw">public interface</span> <span class="cn">ClaimService</span> {
+    <span class="cn">ClaimDto</span>         registerFnol(<span class="cn">FnolRequest</span> request);
+    <span class="cn">List</span>&lt;<span class="cn">ClaimDto</span>&gt;   getClaimsByScope();
+    <span class="cn">ClaimDto</span>         updateReserve(<span class="cn">Long</span> id, <span class="cn">ReserveUpdateRequest</span> request);
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">service / UnderwriteService.java</span>
+          <span class="code-badge cb-interface">Interface</span>
+        </div>
+        <pre>
+<span class="kw">public interface</span> <span class="cn">UnderwriteService</span> {
+    <span class="cn">QuoteResponse</span>          calculatePremiumQuote(<span class="cn">QuoteRequest</span> request);
+    <span class="cn">OverrideResponse</span>       submitOverride(<span class="cn">OverrideRequest</span> request);
+    <span class="cn">List</span>&lt;<span class="cn">OverrideResponse</span>&gt; getAllOverrides();
+    <span class="cn">OverrideResponse</span>       approveOverride(<span class="cn">Long</span> id);
+    <span class="cn">OverrideResponse</span>       rejectOverride(<span class="cn">Long</span> id);
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">service / AuditLogService.java</span>
+          <span class="code-badge cb-interface">Interface</span>
+        </div>
+        <pre>
+<span class="kw">public interface</span> <span class="cn">AuditLogService</span> {
+    <span class="kw">void</span>              log(<span class="cn">String</span> action, <span class="cn">String</span> target, <span class="cn">String</span> detail);
+    <span class="cn">List</span>&lt;<span class="cn">AuditLog</span>&gt;   getAllLogs();
+}</pre>
+      </div>
+    </section>
+
+    <hr class="section-divider page-break">
+
+    <!-- SECTION 4: IMPLEMENTATIONS -->
+    <section id="section-service-impl">
+      <div class="section-header">
+        <div class="section-icon">S</div>
+        <div><div class="section-number">Section 04</div><h2>Service Implementations</h2></div>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">service / UserServiceImpl.java</span>
+          <span class="code-badge cb-impl">Implementation</span>
+        </div>
+        <pre>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cn">UserServiceImpl</span> <span class="kw">implements</span> <span class="cn">UserService</span> {
+
+    <span class="kw">private final</span> <span class="cn">UserRepository</span>       userRepository;
+    <span class="kw">private final</span> <span class="cn">PasswordEncoder</span>      passwordEncoder;
+    <span class="kw">private final</span> <span class="cn">AmlService</span>           amlService;
+    <span class="kw">private final</span> <span class="cn">JwtTokenProvider</span>     tokenProvider;
+    <span class="kw">private final</span> <span class="cn">AuthenticationManager</span> authenticationManager;
+    <span class="kw">private final</span> <span class="cn">AuditLogService</span>      auditLogService;
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="cn">AuthResponse</span> login(<span class="cn">LoginRequest</span> request) {
+        <span class="cn">Authentication</span> authentication = authenticationManager.authenticate(
+            <span class="kw">new</span> <span class="cn">UsernamePasswordAuthenticationToken</span>(
+                request.getEmail(), request.getPassword()));
+        <span class="cn">SecurityContextHolder</span>.getContext().setAuthentication(authentication);
+        <span class="cn">String</span> jwt = tokenProvider.generateToken(authentication);
+        <span class="cn">User</span> user = userRepository.findByEmail(request.getEmail()).orElseThrow(...);
+        <span class="kw">return new</span> <span class="cn">AuthResponse</span>(jwt, user.getEmail(), user.getUsername(), user.getRole().name());
+    }
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>
+    <span class="kw">public</span> <span class="cn">OnboardResponse</span> onboardPolicyholder(<span class="cn">OnboardRequest</span> request) {
+        <span class="cm">// Validate uniqueness of email and username</span>
+        <span class="kw">if</span> (userRepository.existsByEmail(request.getEmail()))
+            <span class="kw">throw new</span> <span class="cn">EmailAlreadyExistsException</span>(<span class="st">"Email already in use"</span>);
+        <span class="kw">if</span> (userRepository.existsByUsername(request.getUsername()))
+            <span class="kw">throw new</span> <span class="cn">IllegalArgumentException</span>(<span class="st">"Username already taken"</span>);
+
+        <span class="cn">User</span> user = <span class="cn">User</span>.builder()
+            .username(request.getUsername())
+            .email(request.getEmail())
+            .passwordHash(passwordEncoder.encode(request.getPassword()))
+            .role(<span class="cn">Role</span>.POLICYHOLDER)
+            .legalName(request.getLegalName())
+            .taxId(request.getTaxId())
+            .address(request.getAddress())
+            .contactNumber(request.getContactNumber())
+            .isActive(<span class="kw">true</span>).amlFlagged(<span class="kw">false</span>).amlStatus(<span class="st">"PENDING"</span>)
+            .build();
+
+        <span class="cn">User</span> savedUser = userRepository.save(user);
+        auditLogService.log(<span class="st">"User Onboarded"</span>, savedUser.getEmail(),
+            <span class="st">"Role: Policyholder, legal name: "</span> + savedUser.getLegalName());
+
+        <span class="cm">// Trigger AML check asynchronously (completes under 1.8 seconds - SRS requirement)</span>
+        amlService.verifyAmlCheckAsync(savedUser.getId());
+
+        <span class="kw">return</span> <span class="cn">OnboardResponse</span>.builder()
+            .id(savedUser.getId()).username(savedUser.getUsername())
+            .email(savedUser.getEmail()).role(savedUser.getRole().name())
+            .amlStatus(savedUser.getAmlStatus()).kycStatus(<span class="st">"VERIFIED"</span>)
+            .message(<span class="st">"Policyholder onboarding initialized; AML check running in background"</span>)
+            .build();
+    }
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>
+    <span class="kw">public</span> <span class="cn">User</span> createUser(<span class="cn">UserCreateRequest</span> request) {
+        <span class="cn">String</span> finalEmail = request.getEmail().trim().toLowerCase();
+        <span class="kw">if</span> (userRepository.existsByEmail(finalEmail))
+            <span class="kw">throw new</span> <span class="cn">EmailAlreadyExistsException</span>(<span class="st">"Email already in use"</span>);
+        <span class="kw">if</span> (userRepository.existsByUsername(request.getUsername()))
+            <span class="kw">throw new</span> <span class="cn">IllegalArgumentException</span>(<span class="st">"Username already taken"</span>);
+
+        <span class="cn">Role</span> role = <span class="cn">Role</span>.valueOf(request.getRole().toUpperCase());
+        <span class="cn">User</span> user = <span class="cn">User</span>.builder()
+            .username(request.getUsername()).email(finalEmail)
+            .passwordHash(passwordEncoder.encode(request.getPassword()))
+            .role(role)
+            .officeId(request.getOfficeId() != <span class="kw">null</span> ? request.getOfficeId() : <span class="st">"Singapore"</span>)
+            .certificationNumber(request.getCertificationNumber())
+            .legalName(request.getLegalName() != <span class="kw">null</span> ? request.getLegalName() : request.getUsername())
+            .isActive(<span class="kw">true</span>).amlFlagged(<span class="kw">false</span>).amlStatus(<span class="st">"CLEARED"</span>)
+            .build();
+
+        <span class="cn">User</span> saved = userRepository.save(user);
+        auditLogService.log(<span class="st">"User Created"</span>, saved.getEmail(),
+            <span class="st">"Role: "</span> + saved.getRole() + <span class="st">", office: "</span> + saved.getOfficeId());
+        <span class="kw">return</span> saved;
+    }
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>
+    <span class="kw">public</span> <span class="cn">User</span> toggleUserActive(<span class="cn">Long</span> id) {
+        <span class="cn">User</span> user = userRepository.findById(id)
+            .orElseThrow(() -&gt; <span class="kw">new</span> <span class="cn">IllegalArgumentException</span>(<span class="st">"User not found"</span>));
+        user.setActive(!user.isActive());
+        <span class="cn">User</span> saved = userRepository.save(user);
+        auditLogService.log(<span class="st">"User Status Toggled"</span>, saved.getEmail(),
+            <span class="st">"Active changed to: "</span> + saved.isActive());
+        <span class="kw">return</span> saved;
+    }
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">service / PolicyServiceImpl.java</span>
+          <span class="code-badge cb-impl">Implementation</span>
+        </div>
+        <pre>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cn">PolicyServiceImpl</span> <span class="kw">implements</span> <span class="cn">PolicyService</span> {
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="cn">List</span>&lt;<span class="cn">Policy</span>&gt; getPoliciesByScope() {
+        <span class="cm">// POLICYHOLDER sees only their own policies; others see all</span>
+        <span class="cn">String</span> email = <span class="cn">SecurityContextHolder</span>.getContext().getAuthentication().getName();
+        <span class="cn">User</span> user = userRepository.findByEmail(email).orElseThrow(...);
+        <span class="kw">return</span> user.getRole() == <span class="cn">Role</span>.POLICYHOLDER
+            ? policyRepository.findByPolicyholderEmail(email)
+            : policyRepository.findAll();
+    }
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>
+    <span class="kw">public</span> <span class="cn">EndorsementResponse</span> endorsePolicy(<span class="cn">Long</span> id, <span class="cn">EndorsementRequest</span> req) {
+        <span class="cm">// Role check: only UNDERWRITER or ADMIN</span>
+        <span class="kw">if</span> (modifier.getRole() != <span class="cn">Role</span>.UNDERWRITER &amp;&amp; modifier.getRole() != <span class="cn">Role</span>.ADMIN)
+            <span class="kw">throw new</span> <span class="cn">AccessDeniedException</span>(<span class="st">"Only Underwriters/Admins can endorse"</span>);
+
+        <span class="cn">BigDecimal</span> oldPremium = policy.getBasePremium();
+        <span class="cn">BigDecimal</span> premiumDiff = req.getBasePremium().subtract(oldPremium);
+        <span class="kw">long</span> daysRemaining = <span class="cn">ChronoUnit</span>.DAYS.between(
+            <span class="cn">LocalDate</span>.now(), policy.getExpiryDate());
+
+        <span class="cm">// Pro-rata adjustment formula: diff * (daysRemaining / 365.0)</span>
+        <span class="cn">BigDecimal</span> proRataAdj = premiumDiff
+            .multiply(<span class="cn">BigDecimal</span>.valueOf(daysRemaining))
+            .divide(<span class="cn">BigDecimal</span>.valueOf(<span class="nm">365.0</span>), <span class="nm">2</span>, <span class="cn">RoundingMode</span>.HALF_UP);
+
+        <span class="cm">// Archive current policy state to policy_history table</span>
+        <span class="cn">PolicyHistory</span> history = <span class="cn">PolicyHistory</span>.builder()
+            .policy(policy).policyNumber(policy.getPolicyNumber())
+            .productType(policy.getProductType()).basePremium(policy.getBasePremium())
+            .expiryDate(policy.getExpiryDate()).status(policy.getStatus())
+            .modifiedBy(modifier.getEmail()).build();
+        policyHistoryRepository.save(history);
+
+        <span class="cm">// Apply endorsement changes</span>
+        policy.setProductType(req.getProductType());
+        policy.setBasePremium(req.getBasePremium());
+        policy.setExpiryDate(req.getExpiryDate());
+        policy.setStatus(<span class="st">"Under Review"</span>);
+        policyRepository.save(policy);
+
+        <span class="kw">return</span> <span class="cn">EndorsementResponse</span>.builder()
+            .policyNumber(policy.getPolicyNumber())
+            .oldPremium(oldPremium).newPremium(req.getBasePremium())
+            .proRataAdjustment(proRataAdj).daysRemaining(daysRemaining)
+            .message(<span class="st">"Policy snapshot archived. Pro-rata adjustment calculated."</span>)
+            .build();
+    }
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>
+    <span class="kw">public</span> <span class="cn">Policy</span> createPolicy(<span class="cn">PolicyCreateRequest</span> request) {
+        <span class="cm">// POLICYHOLDER cannot create policies</span>
+        <span class="kw">if</span> (creator.getRole() == <span class="cn">Role</span>.POLICYHOLDER)
+            <span class="kw">throw new</span> <span class="cn">AccessDeniedException</span>(<span class="st">"Policyholders cannot create policies"</span>);
+
+        <span class="cm">// Validate unique policy number and policyholder email</span>
+        <span class="cn">Policy</span> policy = <span class="cn">Policy</span>.builder()
+            .policyNumber(request.getPolicyNumber())
+            .policyholder(policyholder)
+            .productType(request.getProductType())
+            .basePremium(request.getBasePremium())
+            .activeReserve(<span class="cn">BigDecimal</span>.ZERO)
+            .expiryDate(request.getExpiryDate())
+            .status(<span class="st">"Active"</span>).build();
+        <span class="kw">return</span> policyRepository.save(policy);
+    }
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>
+    <span class="kw">public</span> <span class="cn">Policy</span> renewPolicy(<span class="cn">Long</span> id) {
+        <span class="cm">// Extend expiry by 1 year, reset status to Active</span>
+        policy.setExpiryDate(policy.getExpiryDate().plusYears(<span class="nm">1</span>));
+        policy.setStatus(<span class="st">"Active"</span>);
+        <span class="kw">return</span> policyRepository.save(policy);
+    }
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">service / ClaimServiceImpl.java</span>
+          <span class="code-badge cb-impl">Implementation</span>
+        </div>
+        <pre>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cn">ClaimServiceImpl</span> <span class="kw">implements</span> <span class="cn">ClaimService</span> {
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>
+    <span class="kw">public</span> <span class="cn">ClaimDto</span> registerFnol(<span class="cn">FnolRequest</span> request) {
+        <span class="cm">// Validate 14-day claims registration window (Appendix F)</span>
+        <span class="kw">long</span> daysBetween = <span class="cn">ChronoUnit</span>.DAYS.between(request.getIncidentDate(), <span class="cn">LocalDate</span>.now());
+        <span class="kw">if</span> (daysBetween &gt; <span class="nm">14</span>)
+            <span class="kw">throw new</span> <span class="cn">IllegalArgumentException</span>(
+                <span class="st">"Claims must be reported within 14 calendar days"</span>);
+
+        <span class="cm">// Generate unique claim number: CLM-YYYY-NNNN</span>
+        <span class="cn">String</span> claimNumber;
+        <span class="kw">do</span> {
+            <span class="kw">int</span> rand = (<span class="kw">int</span>) (<span class="cn">Math</span>.random() * <span class="nm">10000</span>);
+            claimNumber = <span class="st">"CLM-"</span> + year + <span class="st">"-"</span> + <span class="cn">String</span>.format(<span class="st">"%04d"</span>, rand);
+        } <span class="kw">while</span> (claimRepository.existsByClaimNumber(claimNumber));
+
+        <span class="cn">Claim</span> claim = <span class="cn">Claim</span>.builder()
+            .claimNumber(claimNumber).policy(policy).reporter(reporter)
+            .incidentDate(request.getIncidentDate())
+            .incidentType(request.getIncidentType())
+            .incidentLocation(request.getIncidentLocation())
+            .lossDescription(request.getLossDescription())
+            .grossReserve(<span class="cn">BigDecimal</span>.ZERO)   <span class="cm">// Default per Appendix B</span>
+            .status(<span class="st">"Pending FNOL"</span>).build();
+        <span class="kw">return</span> mapToDto(claimRepository.save(claim));
+    }
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>
+    <span class="kw">public</span> <span class="cn">ClaimDto</span> updateReserve(<span class="cn">Long</span> id, <span class="cn">ReserveUpdateRequest</span> request) {
+        <span class="cm">// Restricted to CLAIMS_HANDLER and ADMIN only</span>
+        <span class="kw">if</span> (user.getRole() != <span class="cn">Role</span>.CLAIMS_HANDLER &amp;&amp; user.getRole() != <span class="cn">Role</span>.ADMIN)
+            <span class="kw">throw new</span> <span class="cn">AccessDeniedException</span>(
+                <span class="st">"Only Claims Handlers and Admins can modify reserve totals"</span>);
+
+        <span class="cn">Claim</span> claim = claimRepository.findById(id).orElseThrow(...);
+        claim.setGrossReserve(request.getGrossReserve());
+        <span class="kw">if</span> (<span class="st">"Pending FNOL"</span>.equals(claim.getStatus()))
+            claim.setStatus(<span class="st">"Under Investigation"</span>);
+        <span class="kw">return</span> mapToDto(claimRepository.save(claim));
+    }
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">service / UnderwriteServiceImpl.java</span>
+          <span class="code-badge cb-impl">Implementation</span>
+        </div>
+        <pre>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cn">UnderwriteServiceImpl</span> <span class="kw">implements</span> <span class="cn">UnderwriteService</span> {
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="cn">QuoteResponse</span> calculatePremiumQuote(<span class="cn">QuoteRequest</span> request) {
+        <span class="cm">// Composite score = average of 4 risk factors (each 0-100)</span>
+        <span class="kw">double</span> compositeScore = (request.getRegionScore() +
+            request.getAssetAgeScore() +
+            request.getPriorClaimsScore() +
+            request.getBusinessTypeScore()) / <span class="nm">4.0</span>;
+
+        <span class="cn">String</span> riskLevel =
+            compositeScore &gt;= <span class="nm">70</span> ? <span class="st">"HIGH RISK"</span> :
+            compositeScore &gt;= <span class="nm">45</span> ? <span class="st">"MEDIUM RISK"</span> : <span class="st">"LOW RISK"</span>;
+
+        <span class="cm">// Premium formula: $500 + ($15 * compositeScore)</span>
+        <span class="cn">BigDecimal</span> premiumQuote =
+            <span class="cn">BigDecimal</span>.valueOf(<span class="nm">500.00</span> + (<span class="nm">15.00</span> * compositeScore))
+            .setScale(<span class="nm">2</span>, <span class="cn">RoundingMode</span>.HALF_UP);
+
+        <span class="kw">return</span> <span class="cn">QuoteResponse</span>.builder()
+            .compositeRiskScore((<span class="kw">int</span>) <span class="cn">Math</span>.round(compositeScore))
+            .riskLevel(riskLevel).premiumQuote(premiumQuote).build();
+    }
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>
+    <span class="kw">public</span> <span class="cn">OverrideResponse</span> submitOverride(<span class="cn">OverrideRequest</span> request) {
+        <span class="cn">String</span> requestedBy = <span class="cn">SecurityContextHolder</span>.getContext()
+            .getAuthentication().getName();
+        <span class="cn">UnderwriteOverride</span> override = <span class="cn">UnderwriteOverride</span>.builder()
+            .policyNumber(request.getPolicyNumber())
+            .overrideType(request.getOverrideType())
+            .deltaValue(request.getDeltaValue())
+            .requestedBy(requestedBy).status(<span class="st">"PENDING"</span>).build();
+        <span class="kw">return</span> mapToDto(overrideRepository.save(override));
+    }
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>
+    <span class="kw">public</span> <span class="cn">OverrideResponse</span> approveOverride(<span class="cn">Long</span> id) {
+        <span class="cn">UnderwriteOverride</span> override = overrideRepository.findById(id).orElseThrow(...);
+        <span class="cn">String</span> supervisor = <span class="cn">SecurityContextHolder</span>.getContext().getAuthentication().getName();
+        override.setStatus(<span class="st">"APPROVED"</span>);
+        override.setSupervisorSignoffBy(supervisor);
+        <span class="kw">return</span> mapToDto(overrideRepository.save(override));
+    }
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>
+    <span class="kw">public</span> <span class="cn">OverrideResponse</span> rejectOverride(<span class="cn">Long</span> id) {
+        <span class="cn">UnderwriteOverride</span> override = overrideRepository.findById(id).orElseThrow(...);
+        override.setStatus(<span class="st">"REJECTED"</span>);
+        <span class="kw">return</span> mapToDto(overrideRepository.save(override));
+    }
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">service / AmlService.java</span>
+          <span class="code-badge cb-impl">Async Service</span>
+        </div>
+        <pre>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cn">AmlService</span> {
+
+    <span class="cm">// Mock blacklists for AML screening (replace with real OFAC/Sanctions API in production)</span>
+    <span class="kw">private static final</span> <span class="cn">List</span>&lt;<span class="cn">String</span>&gt; BLACKLISTED_NAMES = <span class="cn">Arrays</span>.asList(
+        <span class="st">"BLACKLISTED USER"</span>, <span class="st">"SANCTIONED INDIVIDUAL"</span>,
+        <span class="st">"TERRORIST ORGANIZATION"</span>, <span class="st">"BAD ACTOR"</span>);
+
+    <span class="kw">private static final</span> <span class="cn">List</span>&lt;<span class="cn">String</span>&gt; BLACKLISTED_TAX_IDS = <span class="cn">Arrays</span>.asList(
+        <span class="st">"TAX-ILLEGAL-999"</span>, <span class="st">"OFAC-BAD-777"</span>, <span class="st">"999-99-9999"</span>);
+
+    <span class="kw">public boolean</span> performAmlCheck(<span class="cn">String</span> legalName, <span class="cn">String</span> taxId) {
+        <span class="cn">Thread</span>.sleep(<span class="nm">150</span>);   <span class="cm">// Simulate verification latency (must be below 1.8s)</span>
+        <span class="cn">String</span> normName  = legalName.toUpperCase().trim();
+        <span class="cn">String</span> normTaxId = taxId.toUpperCase().trim();
+        <span class="kw">boolean</span> nameMatch = BLACKLISTED_NAMES.stream().anyMatch(normName::contains);
+        <span class="kw">boolean</span> taxMatch  = BLACKLISTED_TAX_IDS.stream().anyMatch(normTaxId::contains);
+        <span class="kw">return</span> !nameMatch &amp;&amp; !taxMatch;
+    }
+
+    <span class="an">@Async</span>
+    <span class="an">@Transactional</span>
+    <span class="kw">public void</span> verifyAmlCheckAsync(<span class="cn">Long</span> userId) {
+        <span class="cn">User</span> user = userRepository.findById(userId).orElse(<span class="kw">null</span>);
+        <span class="kw">if</span> (user == <span class="kw">null</span>) <span class="kw">return</span>;
+
+        <span class="cn">Thread</span>.sleep(<span class="nm">800</span>);   <span class="cm">// Background async delay</span>
+        <span class="kw">boolean</span> passed = performAmlCheck(user.getLegalName(), user.getTaxId());
+        <span class="kw">if</span> (!passed) {
+            <span class="cm">// Blacklist match: lock account and flag for review (FR5)</span>
+            user.setActive(<span class="kw">false</span>);
+            user.setAmlFlagged(<span class="kw">true</span>);
+            user.setAmlStatus(<span class="st">"FLAGGED"</span>);
+        } <span class="kw">else</span> {
+            user.setAmlStatus(<span class="st">"CLEARED"</span>);
+        }
+        userRepository.save(user);
+    }
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">service / AuditLogServiceImpl.java</span>
+          <span class="code-badge cb-impl">Implementation</span>
+        </div>
+        <pre>
+<span class="an">@Service</span>
+<span class="kw">public class</span> <span class="cn">AuditLogServiceImpl</span> <span class="kw">implements</span> <span class="cn">AuditLogService</span> {
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>(propagation = <span class="cn">Propagation</span>.REQUIRES_NEW)
+    <span class="kw">public void</span> log(<span class="cn">String</span> action, <span class="cn">String</span> target, <span class="cn">String</span> detail) {
+        <span class="cn">Authentication</span> auth = <span class="cn">SecurityContextHolder</span>.getContext().getAuthentication();
+        <span class="cn">String</span> email = <span class="st">"SYSTEM"</span>;
+        <span class="kw">if</span> (auth != <span class="kw">null</span> &amp;&amp; auth.isAuthenticated()
+                &amp;&amp; !<span class="st">"anonymousUser"</span>.equals(auth.getPrincipal()))
+            email = auth.getName();
+
+        <span class="cn">AuditLog</span> log = <span class="cn">AuditLog</span>.builder()
+            .userEmail(email).action(action)
+            .target(target).detail(detail).build();
+        auditLogRepository.save(log);
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="cn">List</span>&lt;<span class="cn">AuditLog</span>&gt; getAllLogs() {
+        <span class="kw">return</span> auditLogRepository.findAllByOrderByTimestampDesc();
+    }
+}</pre>
+      </div>
+    </section>
+
+    <hr class="section-divider page-break">
+
+    <!-- SECTION 5: JPA REPOSITORIES -->
+    <section id="section-jpa">
+      <div class="section-header">
+        <div class="section-icon">D</div>
+        <div><div class="section-number">Section 05</div><h2>JPA Repositories</h2></div>
+      </div>
+      <div class="info-box">All repositories extend <strong>JpaRepository&lt;T, Long&gt;</strong> providing standard CRUD. Custom query methods are auto-generated from Spring Data JPA naming conventions.</div>
+
+      <div class="card-grid">
+        <div class="repo-card avoid-break">
+          <div class="repo-card-title">UserRepository</div>
+          <div class="repo-card-ext">extends JpaRepository&lt;User, Long&gt;</div>
+          <div class="repo-card-methods">
+            <span class="repo-method">findByEmail(String)</span>
+            <span class="repo-method">findByUsername(String)</span>
+            <span class="repo-method">existsByEmail(String)</span>
+            <span class="repo-method">existsByUsername(String)</span>
+          </div>
+        </div>
+        <div class="repo-card avoid-break">
+          <div class="repo-card-title">PolicyRepository</div>
+          <div class="repo-card-ext">extends JpaRepository&lt;Policy, Long&gt;</div>
+          <div class="repo-card-methods">
+            <span class="repo-method">findByPolicyholderEmail(String)</span>
+            <span class="repo-method">findByPolicyNumber(String)</span>
+            <span class="repo-method">existsByPolicyNumber(String)</span>
+          </div>
+        </div>
+        <div class="repo-card avoid-break">
+          <div class="repo-card-title">ClaimRepository</div>
+          <div class="repo-card-ext">extends JpaRepository&lt;Claim, Long&gt;</div>
+          <div class="repo-card-methods">
+            <span class="repo-method">findByReporterEmail(String)</span>
+            <span class="repo-method">findByPolicyPolicyholderEmail(String)</span>
+            <span class="repo-method">findByClaimNumber(String)</span>
+            <span class="repo-method">existsByClaimNumber(String)</span>
+          </div>
+        </div>
+        <div class="repo-card avoid-break">
+          <div class="repo-card-title">PolicyHistoryRepository</div>
+          <div class="repo-card-ext">extends JpaRepository&lt;PolicyHistory, Long&gt;</div>
+          <div class="repo-card-methods">
+            <span class="repo-method">findByPolicyIdOrderByModifiedAtDesc(Long)</span>
+            <span class="repo-method">findByPolicyNumberOrderByModifiedAtDesc(String)</span>
+          </div>
+        </div>
+        <div class="repo-card avoid-break">
+          <div class="repo-card-title">AuditLogRepository</div>
+          <div class="repo-card-ext">extends JpaRepository&lt;AuditLog, Long&gt;</div>
+          <div class="repo-card-methods">
+            <span class="repo-method">findAllByOrderByTimestampDesc()</span>
+          </div>
+        </div>
+        <div class="repo-card avoid-break">
+          <div class="repo-card-title">UnderwriteOverrideRepository</div>
+          <div class="repo-card-ext">extends JpaRepository&lt;UnderwriteOverride, Long&gt;</div>
+          <div class="repo-card-methods">
+            <span class="repo-method">findByPolicyNumber(String)</span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Repository Source Code</h3>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">repository / UserRepository.java</span>
+          <span class="code-badge cb-repo">JPA Repository</span>
+        </div>
+        <pre>
+<span class="an">@Repository</span>
+<span class="kw">public interface</span> <span class="cn">UserRepository</span> <span class="kw">extends</span> <span class="cn">JpaRepository</span>&lt;<span class="cn">User</span>, <span class="cn">Long</span>&gt; {
+    <span class="cn">Optional</span>&lt;<span class="cn">User</span>&gt; findByEmail(<span class="cn">String</span> email);
+    <span class="cn">Optional</span>&lt;<span class="cn">User</span>&gt; findByUsername(<span class="cn">String</span> username);
+    <span class="kw">boolean</span> existsByEmail(<span class="cn">String</span> email);
+    <span class="kw">boolean</span> existsByUsername(<span class="cn">String</span> username);
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">repository / PolicyRepository.java</span>
+          <span class="code-badge cb-repo">JPA Repository</span>
+        </div>
+        <pre>
+<span class="an">@Repository</span>
+<span class="kw">public interface</span> <span class="cn">PolicyRepository</span> <span class="kw">extends</span> <span class="cn">JpaRepository</span>&lt;<span class="cn">Policy</span>, <span class="cn">Long</span>&gt; {
+    <span class="cn">List</span>&lt;<span class="cn">Policy</span>&gt;     findByPolicyholderEmail(<span class="cn">String</span> email);
+    <span class="cn">Optional</span>&lt;<span class="cn">Policy</span>&gt; findByPolicyNumber(<span class="cn">String</span> policyNumber);
+    <span class="kw">boolean</span>          existsByPolicyNumber(<span class="cn">String</span> policyNumber);
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">repository / ClaimRepository.java</span>
+          <span class="code-badge cb-repo">JPA Repository</span>
+        </div>
+        <pre>
+<span class="an">@Repository</span>
+<span class="kw">public interface</span> <span class="cn">ClaimRepository</span> <span class="kw">extends</span> <span class="cn">JpaRepository</span>&lt;<span class="cn">Claim</span>, <span class="cn">Long</span>&gt; {
+    <span class="cn">List</span>&lt;<span class="cn">Claim</span>&gt;    findByReporterEmail(<span class="cn">String</span> email);
+    <span class="cn">List</span>&lt;<span class="cn">Claim</span>&gt;    findByPolicyPolicyholderEmail(<span class="cn">String</span> email);
+    <span class="cn">Optional</span>&lt;<span class="cn">Claim</span>&gt; findByClaimNumber(<span class="cn">String</span> claimNumber);
+    <span class="kw">boolean</span>         existsByClaimNumber(<span class="cn">String</span> claimNumber);
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">repository / PolicyHistoryRepository.java</span>
+          <span class="code-badge cb-repo">JPA Repository</span>
+        </div>
+        <pre>
+<span class="an">@Repository</span>
+<span class="kw">public interface</span> <span class="cn">PolicyHistoryRepository</span>
+        <span class="kw">extends</span> <span class="cn">JpaRepository</span>&lt;<span class="cn">PolicyHistory</span>, <span class="cn">Long</span>&gt; {
+    <span class="cn">List</span>&lt;<span class="cn">PolicyHistory</span>&gt; findByPolicyIdOrderByModifiedAtDesc(<span class="cn">Long</span> policyId);
+    <span class="cn">List</span>&lt;<span class="cn">PolicyHistory</span>&gt; findByPolicyNumberOrderByModifiedAtDesc(<span class="cn">String</span> policyNumber);
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">repository / AuditLogRepository.java</span>
+          <span class="code-badge cb-repo">JPA Repository</span>
+        </div>
+        <pre>
+<span class="an">@Repository</span>
+<span class="kw">public interface</span> <span class="cn">AuditLogRepository</span>
+        <span class="kw">extends</span> <span class="cn">JpaRepository</span>&lt;<span class="cn">AuditLog</span>, <span class="cn">Long</span>&gt; {
+    <span class="cn">List</span>&lt;<span class="cn">AuditLog</span>&gt; findAllByOrderByTimestampDesc();
+}</pre>
+      </div>
+
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">repository / UnderwriteOverrideRepository.java</span>
+          <span class="code-badge cb-repo">JPA Repository</span>
+        </div>
+        <pre>
+<span class="an">@Repository</span>
+<span class="kw">public interface</span> <span class="cn">UnderwriteOverrideRepository</span>
+        <span class="kw">extends</span> <span class="cn">JpaRepository</span>&lt;<span class="cn">UnderwriteOverride</span>, <span class="cn">Long</span>&gt; {
+    <span class="cn">List</span>&lt;<span class="cn">UnderwriteOverride</span>&gt; findByPolicyNumber(<span class="cn">String</span> policyNumber);
+}</pre>
+      </div>
+
+      <h3>Database Configuration</h3>
+      <div class="code-file avoid-break">
+        <div class="code-file-header">
+          <div class="code-file-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span class="code-file-name">resources / application.properties</span>
+          <span class="code-badge cb-interface">Config</span>
+        </div>
+        <pre>
+<span class="cm"># Application</span>
+spring.application.name=backend
+server.port=<span class="nm">8080</span>
+
+<span class="cm"># PostgreSQL Database</span>
+spring.datasource.url=jdbc:postgresql://localhost:<span class="nm">5432</span>/insurance_db
+spring.datasource.username=postgres
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+<span class="cm"># JPA / Hibernate</span>
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=<span class="kw">true</span>
+spring.jpa.properties.hibernate.format_sql=<span class="kw">true</span>
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+
+<span class="cm"># Logging</span>
+logging.level.org.springframework.security=INFO</pre>
+      </div>
+    </section>
+
+    <hr class="section-divider page-break">
+
+    <!-- SECTION 6: API REFERENCE -->
+    <section id="section-api">
+      <div class="section-header">
+        <div class="section-icon">P</div>
+        <div><div class="section-number">Section 06</div><h2>API Endpoint Reference</h2></div>
+      </div>
+
+      <div class="info-box">
+        <strong>Base URL:</strong> http://localhost:8080<br>
+        <strong>Authentication:</strong> Bearer JWT token in Authorization header (except /api/auth/login).
+      </div>
+
+      <h3>Authentication</h3>
+      <table class="api-table">
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Access</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method m-post">POST</span></td><td class="endpoint-url">/api/auth/login</td><td>Authenticate and receive JWT token</td><td><span class="role-badge role-all">Public</span></td></tr>
+          <tr><td><span class="method m-post">POST</span></td><td class="endpoint-url">/api/auth/logout</td><td>Clear security context / logout</td><td><span class="role-badge role-all">Authenticated</span></td></tr>
+        </tbody>
+      </table>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/auth/login</span>
+          <span class="postman-endpoint-desc">200 OK - Returns JWT Bearer token</span>
+        </div>
+        <div class="postman-section-label">Request Body (JSON)</div>
+        <pre style="border-radius:0;border:none;background:#0d1117;font-size:12px;padding:16px 20px;">
+{
+  <span class="st">"email"</span>:    <span class="st">"admin@insurance.com"</span>,
+  <span class="st">"password"</span>: <span class="st">"Admin@123"</span>
+}</pre>
+        <div class="postman-section-label">Response 200 OK</div>
+        <pre style="border-radius:0;border:none;background:#0d1117;font-size:12px;padding:16px 20px;">
+{
+  <span class="st">"token"</span>:    <span class="st">"eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBpb..."</span>,
+  <span class="st">"email"</span>:    <span class="st">"admin@insurance.com"</span>,
+  <span class="st">"username"</span>: <span class="st">"admin"</span>,
+  <span class="st">"role"</span>:     <span class="st">"ADMIN"</span>
+}</pre>
+      </div>
+
+      <h3>Policy Management</h3>
+      <table class="api-table">
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Access</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method m-post">POST</span></td><td class="endpoint-url">/api/policy/onboard</td><td>Onboard new policyholder (triggers AML)</td><td><span class="role-badge role-admin">Admin</span><span class="role-badge role-agent">Agent</span></td></tr>
+          <tr><td><span class="method m-get">GET</span></td><td class="endpoint-url">/api/policy/all</td><td>Get all policies (scope-filtered)</td><td><span class="role-badge role-all">Authenticated</span></td></tr>
+          <tr><td><span class="method m-post">POST</span></td><td class="endpoint-url">/api/policies</td><td>Create a new insurance policy</td><td><span class="role-badge role-admin">Admin</span><span class="role-badge role-uw">Underwriter</span><span class="role-badge role-agent">Agent</span></td></tr>
+          <tr><td><span class="method m-post">POST</span></td><td class="endpoint-url">/api/policies/{id}/endorse</td><td>Mid-term endorsement with pro-rata calculation</td><td><span class="role-badge role-admin">Admin</span><span class="role-badge role-uw">Underwriter</span></td></tr>
+          <tr><td><span class="method m-get">GET</span></td><td class="endpoint-url">/api/policies/{id}/history</td><td>View policy endorsement history</td><td><span class="role-badge role-all">Authenticated</span></td></tr>
+          <tr><td><span class="method m-post">POST</span></td><td class="endpoint-url">/api/policies/{id}/renew</td><td>Renew policy - extends expiry by 1 year</td><td><span class="role-badge role-admin">Admin</span><span class="role-badge role-uw">Underwriter</span><span class="role-badge role-agent">Agent</span></td></tr>
+        </tbody>
+      </table>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/policy/onboard</span>
+          <span class="postman-endpoint-desc">201 Created</span>
+        </div>
+        <div class="postman-section-label">Request Body</div>
+        <pre style="border-radius:0;border:none;background:#0d1117;font-size:12px;padding:16px 20px;">
+{
+  <span class="st">"username"</span>:      <span class="st">"john_doe"</span>,
+  <span class="st">"email"</span>:         <span class="st">"john.doe@example.com"</span>,
+  <span class="st">"password"</span>:      <span class="st">"SecurePass@1"</span>,
+  <span class="st">"legalName"</span>:     <span class="st">"John Doe"</span>,
+  <span class="st">"taxId"</span>:         <span class="st">"123-45-6789"</span>,
+  <span class="st">"address"</span>:       <span class="st">"123 Main St, Singapore"</span>,
+  <span class="st">"contactNumber"</span>: <span class="st">"+6512345678"</span>
+}</pre>
+        <div class="postman-section-label">Response 201 Created</div>
+        <pre style="border-radius:0;border:none;background:#0d1117;font-size:12px;padding:16px 20px;">
+{
+  <span class="st">"id"</span>:        <span class="nm">7</span>,
+  <span class="st">"username"</span>:  <span class="st">"john_doe"</span>,
+  <span class="st">"email"</span>:     <span class="st">"john.doe@example.com"</span>,
+  <span class="st">"role"</span>:      <span class="st">"POLICYHOLDER"</span>,
+  <span class="st">"amlStatus"</span>: <span class="st">"PENDING"</span>,
+  <span class="st">"kycStatus"</span>: <span class="st">"VERIFIED"</span>,
+  <span class="st">"message"</span>:   <span class="st">"Policyholder onboarding initialized; AML check running in background"</span>
+}</pre>
+      </div>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/policies/{id}/endorse</span>
+          <span class="postman-endpoint-desc">200 OK - Endorsement with pro-rata</span>
+        </div>
+        <div class="postman-section-label">Request Body</div>
+        <pre style="border-radius:0;border:none;background:#0d1117;font-size:12px;padding:16px 20px;">
+{
+  <span class="st">"productType"</span>: <span class="st">"Marine Cargo"</span>,
+  <span class="st">"basePremium"</span>: <span class="nm">1500.00</span>,
+  <span class="st">"expiryDate"</span>:  <span class="st">"2027-08-11"</span>
+}</pre>
+        <div class="postman-section-label">Response 200 OK</div>
+        <pre style="border-radius:0;border:none;background:#0d1117;font-size:12px;padding:16px 20px;">
+{
+  <span class="st">"policyNumber"</span>:      <span class="st">"POL-2026-001"</span>,
+  <span class="st">"oldPremium"</span>:        <span class="nm">1200.00</span>,
+  <span class="st">"newPremium"</span>:        <span class="nm">1500.00</span>,
+  <span class="st">"proRataAdjustment"</span>: <span class="nm">82.19</span>,
+  <span class="st">"daysRemaining"</span>:     <span class="nm">365</span>,
+  <span class="st">"message"</span>:           <span class="st">"Policy snapshot archived. Pro-rata premium adjustment calculated successfully."</span>
+}</pre>
+      </div>
+
+      <h3>Claims Management</h3>
+      <table class="api-table">
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Access</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method m-post">POST</span></td><td class="endpoint-url">/api/claims/fnol</td><td>Register First Notice of Loss (14-day window enforced)</td><td><span class="role-badge role-all">Authenticated</span></td></tr>
+          <tr><td><span class="method m-get">GET</span></td><td class="endpoint-url">/api/claims</td><td>Get claims (policyholders see own; others see all)</td><td><span class="role-badge role-all">Authenticated</span></td></tr>
+          <tr><td><span class="method m-put">PUT</span></td><td class="endpoint-url">/api/claims/reserve/{id}</td><td>Update gross reserve on a claim</td><td><span class="role-badge role-admin">Admin</span><span class="role-badge role-ch">Claims Handler</span></td></tr>
+        </tbody>
+      </table>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/claims/fnol</span>
+          <span class="postman-endpoint-desc">201 Created</span>
+        </div>
+        <div class="postman-section-label">Request Body</div>
+        <pre style="border-radius:0;border:none;background:#0d1117;font-size:12px;padding:16px 20px;">
+{
+  <span class="st">"policyNumber"</span>:     <span class="st">"POL-2026-001"</span>,
+  <span class="st">"incidentDate"</span>:     <span class="st">"2026-08-05"</span>,
+  <span class="st">"incidentType"</span>:     <span class="st">"Fire Damage"</span>,
+  <span class="st">"incidentLocation"</span>: <span class="st">"Warehouse Block A, Singapore"</span>,
+  <span class="st">"lossDescription"</span>:  <span class="st">"Electrical fire caused damage to goods in storage."</span>
+}</pre>
+        <div class="postman-section-label">Response 201 Created</div>
+        <pre style="border-radius:0;border:none;background:#0d1117;font-size:12px;padding:16px 20px;">
+{
+  <span class="st">"id"</span>:               <span class="nm">1</span>,
+  <span class="st">"claimNumber"</span>:      <span class="st">"CLM-2026-0047"</span>,
+  <span class="st">"policyNumber"</span>:     <span class="st">"POL-2026-001"</span>,
+  <span class="st">"policyholderName"</span>: <span class="st">"John Doe"</span>,
+  <span class="st">"incidentType"</span>:     <span class="st">"Fire Damage"</span>,
+  <span class="st">"incidentDate"</span>:     <span class="st">"2026-08-05"</span>,
+  <span class="st">"grossReserve"</span>:     <span class="nm">0.00</span>,
+  <span class="st">"status"</span>:           <span class="st">"Pending FNOL"</span>
+}</pre>
+      </div>
+
+      <h3>Underwriting</h3>
+      <table class="api-table">
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Access</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method m-post">POST</span></td><td class="endpoint-url">/api/underwrite/quote</td><td>Calculate composite risk score and premium quote</td><td><span class="role-badge role-all">Authenticated</span></td></tr>
+          <tr><td><span class="method m-post">POST</span></td><td class="endpoint-url">/api/underwrite/override</td><td>Submit premium override request</td><td><span class="role-badge role-all">Authenticated</span></td></tr>
+          <tr><td><span class="method m-get">GET</span></td><td class="endpoint-url">/api/underwrite/overrides</td><td>List all override requests</td><td><span class="role-badge role-admin">Admin</span><span class="role-badge role-uw">Underwriter</span></td></tr>
+          <tr><td><span class="method m-put">PUT</span></td><td class="endpoint-url">/api/underwrite/override/{id}/approve</td><td>Approve an override request</td><td><span class="role-badge role-admin">Admin</span><span class="role-badge role-uw">Underwriter</span></td></tr>
+          <tr><td><span class="method m-put">PUT</span></td><td class="endpoint-url">/api/underwrite/override/{id}/reject</td><td>Reject an override request</td><td><span class="role-badge role-admin">Admin</span><span class="role-badge role-uw">Underwriter</span></td></tr>
+        </tbody>
+      </table>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="postman-endpoint-title">/api/underwrite/quote</span>
+          <span class="postman-endpoint-desc">200 OK - Risk scoring and premium</span>
+        </div>
+        <div class="postman-section-label">Request Body - Risk score inputs (0-100 each)</div>
+        <pre style="border-radius:0;border:none;background:#0d1117;font-size:12px;padding:16px 20px;">
+{
+  <span class="st">"regionScore"</span>:      <span class="nm">60</span>,
+  <span class="st">"assetAgeScore"</span>:    <span class="nm">40</span>,
+  <span class="st">"priorClaimsScore"</span>: <span class="nm">50</span>,
+  <span class="st">"businessTypeScore"</span>:<span class="nm">45</span>
+}</pre>
+        <div class="postman-section-label">Response 200 OK</div>
+        <pre style="border-radius:0;border:none;background:#0d1117;font-size:12px;padding:16px 20px;">
+{
+  <span class="st">"compositeRiskScore"</span>: <span class="nm">49</span>,
+  <span class="st">"riskLevel"</span>:         <span class="st">"MEDIUM RISK"</span>,
+  <span class="st">"premiumQuote"</span>:      <span class="nm">1233.75</span>
+}
+<span class="cm">// Formula: Premium = $500 + ($15 x compositeAvg)
+// LOW: score &lt; 45 | MEDIUM: 45-69 | HIGH: 70+</span></pre>
+      </div>
+
+      <h3>Admin Panel</h3>
+      <table class="api-table">
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Access</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method m-get">GET</span></td><td class="endpoint-url">/api/admin/audit-logs</td><td>Retrieve all audit log entries (newest first)</td><td><span class="role-badge role-admin">Admin only</span></td></tr>
+          <tr><td><span class="method m-get">GET</span></td><td class="endpoint-url">/api/admin/users</td><td>List all system users</td><td><span class="role-badge role-admin">Admin only</span></td></tr>
+          <tr><td><span class="method m-post">POST</span></td><td class="endpoint-url">/api/admin/users</td><td>Create a new user (any role)</td><td><span class="role-badge role-admin">Admin only</span></td></tr>
+          <tr><td><span class="method m-put">PUT</span></td><td class="endpoint-url">/api/admin/users/{id}/toggle-active</td><td>Enable or disable a user account</td><td><span class="role-badge role-admin">Admin only</span></td></tr>
+        </tbody>
+      </table>
+
+      <div class="postman-endpoint avoid-break">
+        <div class="postman-endpoint-header">
+          <span class="method m-get">GET</span>
+          <span class="postman-endpoint-title">/api/admin/audit-logs</span>
+          <span class="postman-endpoint-desc">200 OK - Array of log entries</span>
+        </div>
+        <div class="postman-section-label">Response 200 OK</div>
+        <pre style="border-radius:0;border:none;background:#0d1117;font-size:12px;padding:16px 20px;">
+[
+  {
+    <span class="st">"id"</span>:        <span class="nm">12</span>,
+    <span class="st">"timestamp"</span>: <span class="st">"2026-08-11 14:22:31"</span>,
+    <span class="st">"userEmail"</span>: <span class="st">"underwriter@insurance.com"</span>,
+    <span class="st">"action"</span>:    <span class="st">"Policy Endorsed"</span>,
+    <span class="st">"target"</span>:    <span class="st">"POL-2026-001"</span>,
+    <span class="st">"detail"</span>:    <span class="st">"Product: Marine Cargo, Premium: $1200 -&gt; $1500, Pro-rata: $82.19"</span>
+  },
+  {
+    <span class="st">"id"</span>:        <span class="nm">11</span>,
+    <span class="st">"timestamp"</span>: <span class="st">"2026-08-11 14:10:05"</span>,
+    <span class="st">"userEmail"</span>: <span class="st">"admin@insurance.com"</span>,
+    <span class="st">"action"</span>:    <span class="st">"User Created"</span>,
+    <span class="st">"target"</span>:    <span class="st">"handler@insurance.com"</span>,
+    <span class="st">"detail"</span>:    <span class="st">"Role: CLAIMS_HANDLER, office: Singapore"</span>
+  }
+]</pre>
+      </div>
+
+      <div class="note-box">
+        <strong>Note on Postman Collection:</strong> The postman/Insurance.postman_collection.json file is currently empty. 
+        To populate it: open Postman, create requests using the endpoints above with base URL http://localhost:8080, 
+        use the login endpoint to get a Bearer token, then export the collection.
+      </div>
+
+      <h3>Role Access Matrix</h3>
+      <table class="api-table">
+        <thead><tr><th>Role</th><th>Policy</th><th>Claims</th><th>Underwriting</th><th>Admin Panel</th></tr></thead>
+        <tbody>
+          <tr><td><span class="role-badge role-admin">ADMIN</span></td><td>Full access</td><td>Full access</td><td>Full access</td><td>Full access</td></tr>
+          <tr><td><span class="role-badge role-uw">UNDERWRITER</span></td><td>Create, Endorse, Renew</td><td>View all</td><td>Quote, Override, Approve/Reject</td><td>No access</td></tr>
+          <tr><td><span class="role-badge role-agent">AGENT</span></td><td>Create, Renew, View</td><td>View all</td><td>Quote only</td><td>No access</td></tr>
+          <tr><td><span class="role-badge role-ch">CLAIMS_HANDLER</span></td><td>View only</td><td>Register FNOL, View all, Update Reserve</td><td>Quote only</td><td>No access</td></tr>
+          <tr><td><span class="role-badge role-ph">POLICYHOLDER</span></td><td>View own only</td><td>Register FNOL, View own</td><td>Quote only</td><td>No access</td></tr>
+        </tbody>
+      </table>
+
+    </section>
+  </div>
+
+  <div class="doc-footer">
+    Insurance Policy and Claim Management System (IPCMS) - Spring Boot 3 | Java 21 | PostgreSQL | React + TypeScript | Vite - Documentation August 2026
+  </div>
+</div>
+</body>
+</html>
