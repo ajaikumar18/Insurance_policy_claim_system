@@ -1,0 +1,23 @@
+# ==========================================
+# Multi-stage Dockerfile for Frontend Service
+# ==========================================
+
+# 1. Build stage
+FROM node:20-alpine AS build
+WORKDIR /app
+
+# Cache dependencies
+COPY frontend/package*.json ./
+RUN npm install
+
+# Build production bundle
+COPY frontend/ ./
+RUN npm run build
+
+# 2. Production stage with Nginx
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

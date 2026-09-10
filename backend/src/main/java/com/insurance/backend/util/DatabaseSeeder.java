@@ -119,6 +119,23 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .amlStatus("CLEARED")
                     .build();
             userRepository.save(policyholder);
+
+            User holder = User.builder()
+                    .username("holder")
+                    .email("holder@ipcms.local")
+                    .passwordHash(hashedPw)
+                    .role(Role.POLICYHOLDER)
+                    .officeId("Singapore")
+                    .certificationNumber("PH-2024-056")
+                    .isActive(true)
+                    .legalName("John Meridian")
+                    .taxId("TAX-005")
+                    .address("202 Policyholder Lane")
+                    .contactNumber("1234567890")
+                    .amlFlagged(false)
+                    .amlStatus("CLEARED")
+                    .build();
+            userRepository.save(holder);
             
             System.out.println("Default users seeded successfully.");
         }
@@ -126,7 +143,10 @@ public class DatabaseSeeder implements CommandLineRunner {
         if (policyRepository.count() == 0) {
             System.out.println("Seeding default policies...");
             
-            Optional<User> holderOpt = userRepository.findByEmail("policyholder@ipcms.local");
+            Optional<User> holderOpt = userRepository.findByEmail("holder@ipcms.local");
+            if (holderOpt.isEmpty()) {
+                holderOpt = userRepository.findByEmail("policyholder@ipcms.local");
+            }
             if (holderOpt.isPresent()) {
                 User holder = holderOpt.get();
 
